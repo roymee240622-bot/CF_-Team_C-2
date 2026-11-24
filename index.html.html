@@ -1,10 +1,17 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ติดตามการยืนยันยอดบัญชีเงินฝากธนาคาร</title>
 <style>
+.up{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:16px}
+.upb{background:var(--card);border:1px dashed var(--bd);border-radius:10px;padding:12px}
+.upb b{display:block;margin-bottom:6px}
+.upb input[type=file]{width:100%;font-size:13px}
+.type{font-size:12px;color:var(--mu);display:block}
+.msg{color:var(--mu);font-size:13px;margin:-8px 0 12px}
 :root{--bg:#f6f7f9;--card:#fff;--tx:#1b2430;--mu:#6b7683;--bd:#dfe3e8;--ac:#1f5fbf;--ok:#1a7f4b;--okb:#e0f3e8;--wt:#9a6700;--wtb:#fff1cc;--rd:#b42318;--rdb:#fde3e0;--gy:#59636e;--gyb:#eceff2;--bl:#1f5fbf;--blb:#e3edfb;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171c;--card:#1d222a;--tx:#e8ebef;--mu:#98a2ae;--bd:#2f3640;--ac:#6ea4f5;--ok:#5fd394;--okb:#16352a;--wt:#f0c050;--wtb:#3a3014;--rd:#ff8f84;--rdb:#3d1f1c;--gy:#aab3bd;--gyb:#272d36;--bl:#8db8f8;--blb:#1b2c47;color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#14171c;--card:#1d222a;--tx:#e8ebef;--mu:#98a2ae;--bd:#2f3640;--ac:#6ea4f5;--ok:#5fd394;--okb:#16352a;--wt:#f0c050;--wtb:#3a3014;--rd:#ff8f84;--rdb:#3d1f1c;--gy:#aab3bd;--gyb:#272d36;--bl:#8db8f8;--blb:#1b2c47;color-scheme:dark}
@@ -47,12 +54,17 @@ td.bk input{width:100%}
 <body>
 <div class="wrap">
   <h1>ติดตามการยืนยันยอดบัญชีเงินฝากธนาคาร</h1>
-  <p class="sub">ลูกค้า 1 ราย มีได้หลายธนาคาร · บันทึกวันที่แต่ละขั้นตอน ระบบสรุปสถานะให้อัตโนมัติ · ข้อมูลเก็บไว้ในเบราว์เซอร์ของคุณ</p>
-  <div class="stats" id="stats"></div>
+  <p class="sub">ลูกค้า (สหกรณ์) 1 ราย มีได้หลายรายการ (ธนาคาร / สหกรณ์ / เงินลงทุน) · บันทึกวันที่แต่ละขั้นตอน ระบบสรุปสถานะให้อัตโนมัติ · ข้อมูลเก็บไว้ในเบราว์เซอร์ของคุณ</p>
+  <div class="stats" id="stats"></div><div class="up">
+  <div class="upb"><b>1. ไฟล์ธนาคาร</b><input type="file" accept=".csv,.xlsx,.xls" data-type="ธนาคาร"></div>
+  <div class="upb"><b>2. ไฟล์สหกรณ์</b><input type="file" accept=".csv,.xlsx,.xls" data-type="สหกรณ์"></div>
+  <div class="upb"><b>3. เงินลงทุนในหลักทรัพย์/ธนาคาร</b><input type="file" accept=".csv,.xlsx,.xls" data-type="เงินลงทุน"></div>
+</div>
+<div class="msg" id="msg"></div>
   <div class="bar">
     <input type="text" id="newCust" placeholder="ชื่อลูกค้าใหม่">
     <button id="addCust">+ เพิ่มลูกค้า</button>
-    <input type="text" id="q" placeholder="ค้นหาลูกค้า / ธนาคาร">
+    <input type="text" id="q" placeholder="ค้นหาลูกค้า / ชื่อหน่วยงาน / ประเภท">
   </div>
   <div id="list"></div>
 </div>
@@ -79,9 +91,9 @@ function render(){
       return (filter==-1||status(b)==filter)&&(!q||cm||b.bank.toLowerCase().indexOf(q)>-1)});
     if((filter!=-1||q)&&!rows.length)return;
     var done=c.banks.filter(function(b){return status(b)==4}).length;
-    out+='<div class="cust"><div class="ch"><h2>'+esc(c.name)+'</h2><small>เสร็จ '+done+'/'+c.banks.length+' ธนาคาร</small><button class="ghost" data-a="addbank" data-c="'+c.id+'">+ ธนาคาร</button><button class="x" data-a="delcust" data-c="'+c.id+'">ลบลูกค้า</button></div>';
+    out+='<div class="cust"><div class="ch"><h2>'+esc(c.name)+'</h2><small>เสร็จ '+done+'/'+c.banks.length+' รายการ</small><button class="ghost" data-a="addbank" data-c="'+c.id+'">+ รายการ</button><button class="x" data-a="delcust" data-c="'+c.id+'">ลบลูกค้า</button></div>';
     if(rows.length){
-      out+='<div class="scroll"><table><tr><th>1. ธนาคาร</th><th>2. ส่งให้ลูกค้า</th><th>3. ลูกค้าส่งกลับ</th><th>4. ส่งออกภายนอก</th><th>5. ภายนอกส่งกลับ</th><th>สถานะ</th><th></th></tr>';
+      out+='<div class="scroll"><table><tr><th>1. ชื่อหน่วยงาน / ประเภท</th><th>2. ส่งให้ลูกค้า</th><th>3. ลูกค้าส่งกลับ</th><th>4. ส่งออกภายนอก</th><th>5. ภายนอกส่งกลับ</th><th>สถานะ</th><th></th></tr>';
       rows.forEach(function(b){
         var s=status(b),k='data-c="'+c.id+'" data-b="'+b.id+'"';
         out+='<tr><td class="bk"><input type="text" value="'+esc(b.bank)+'" placeholder="ชื่อธนาคาร" data-k="bank" '+k+'></td>';
@@ -89,7 +101,7 @@ function render(){
         out+='<td><span class="badge s'+s+'">'+LABEL[s]+'</span><span class="late">'+late(b)+'</span></td><td><button class="x" data-a="delbank" '+k+'>ลบ</button></td></tr>';
       });
       out+='</table></div>';
-    }else out+='<div class="empty">ยังไม่มีธนาคาร กด + ธนาคาร เพื่อเพิ่ม</div>';
+    }else out+='<div class="empty">ยังไม่มีรายการ กด + รายการ เพื่อเพิ่ม</div>';
     out+='</div>';
   });
   document.getElementById("list").innerHTML=out||'<div class="empty">ยังไม่มีข้อมูล เพิ่มชื่อลูกค้าด้านบนเพื่อเริ่มต้น</div>';
