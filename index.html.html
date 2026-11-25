@@ -1,17 +1,11 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ติดตามการยืนยันยอดบัญชีเงินฝากธนาคาร</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-.up{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:16px}
-.upb{background:var(--card);border:1px dashed var(--bd);border-radius:10px;padding:12px}
-.upb b{display:block;margin-bottom:6px}
-.upb input[type=file]{width:100%;font-size:13px}
-.type{font-size:12px;color:var(--mu);display:block}
-.msg{color:var(--mu);font-size:13px;margin:-8px 0 12px}
 :root{--bg:#f6f7f9;--card:#fff;--tx:#1b2430;--mu:#6b7683;--bd:#dfe3e8;--ac:#1f5fbf;--ok:#1a7f4b;--okb:#e0f3e8;--wt:#9a6700;--wtb:#fff1cc;--rd:#b42318;--rdb:#fde3e0;--gy:#59636e;--gyb:#eceff2;--bl:#1f5fbf;--blb:#e3edfb;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171c;--card:#1d222a;--tx:#e8ebef;--mu:#98a2ae;--bd:#2f3640;--ac:#6ea4f5;--ok:#5fd394;--okb:#16352a;--wt:#f0c050;--wtb:#3a3014;--rd:#ff8f84;--rdb:#3d1f1c;--gy:#aab3bd;--gyb:#272d36;--bl:#8db8f8;--blb:#1b2c47;color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#14171c;--card:#1d222a;--tx:#e8ebef;--mu:#98a2ae;--bd:#2f3640;--ac:#6ea4f5;--ok:#5fd394;--okb:#16352a;--wt:#f0c050;--wtb:#3a3014;--rd:#ff8f84;--rdb:#3d1f1c;--gy:#aab3bd;--gyb:#272d36;--bl:#8db8f8;--blb:#1b2c47;color-scheme:dark}
@@ -21,6 +15,12 @@ body{margin:0;background:var(--bg);color:var(--tx);font-family:"Sarabun","Noto S
 .wrap{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
 h1{font-size:22px;margin:0 0 4px}
 .sub{color:var(--mu);margin:0 0 18px}
+.up{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:10px}
+.upb{background:var(--card);border:1px dashed var(--bd);border-radius:10px;padding:12px}
+.upb b{display:block;margin-bottom:6px}
+.upb input[type=file]{width:100%;font-size:13px}
+.msg{color:var(--mu);font-size:13px;margin:0 0 14px;min-height:20px}
+.type{font-size:12px;color:var(--mu);display:block;margin-top:2px}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px}
 .stat{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;cursor:pointer}
 .stat b{display:block;font-size:22px}
@@ -42,12 +42,11 @@ button.x{background:transparent;color:var(--rd);padding:4px 8px}
 table{border-collapse:collapse;width:100%;min-width:860px}
 th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--bd);vertical-align:middle}
 th{font-size:13px;color:var(--mu);font-weight:600;background:var(--bg)}
-td.bk{min-width:170px}
+td.bk{min-width:190px}
 td.bk input{width:100%}
 .badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:13px;white-space:nowrap}
 .s0{background:var(--gyb);color:var(--gy)}.s1{background:var(--wtb);color:var(--wt)}.s2{background:var(--blb);color:var(--bl)}.s3{background:var(--wtb);color:var(--wt)}.s4{background:var(--okb);color:var(--ok)}
 .late{color:var(--rd);font-size:12px;display:block}
-.add{padding:10px 14px}
 .empty{text-align:center;color:var(--mu);padding:40px 10px}
 </style>
 </head>
@@ -55,16 +54,18 @@ td.bk input{width:100%}
 <div class="wrap">
   <h1>ติดตามการยืนยันยอดบัญชีเงินฝากธนาคาร</h1>
   <p class="sub">ลูกค้า (สหกรณ์) 1 ราย มีได้หลายรายการ (ธนาคาร / สหกรณ์ / เงินลงทุน) · บันทึกวันที่แต่ละขั้นตอน ระบบสรุปสถานะให้อัตโนมัติ · ข้อมูลเก็บไว้ในเบราว์เซอร์ของคุณ</p>
-  <div class="stats" id="stats"></div><div class="up">
-  <div class="upb"><b>1. ไฟล์ธนาคาร</b><input type="file" accept=".csv,.xlsx,.xls" data-type="ธนาคาร"></div>
-  <div class="upb"><b>2. ไฟล์สหกรณ์</b><input type="file" accept=".csv,.xlsx,.xls" data-type="สหกรณ์"></div>
-  <div class="upb"><b>3. เงินลงทุนในหลักทรัพย์/ธนาคาร</b><input type="file" accept=".csv,.xlsx,.xls" data-type="เงินลงทุน"></div>
-</div>
-<div class="msg" id="msg"></div>
+  <div class="up">
+    <div class="upb"><b>1. ไฟล์ธนาคาร</b><input type="file" accept=".csv,.xlsx,.xls" data-type="ธนาคาร"></div>
+    <div class="upb"><b>2. ไฟล์สหกรณ์</b><input type="file" accept=".csv,.xlsx,.xls" data-type="สหกรณ์"></div>
+    <div class="upb"><b>3. เงินลงทุนในหลักทรัพย์/ธนาคาร</b><input type="file" accept=".csv,.xlsx,.xls" data-type="เงินลงทุน"></div>
+  </div>
+  <div class="msg" id="msg">นำเข้าไฟล์ที่มีคอลัมน์ “ชื่อสหกรณ์/ลูกค้า” และ “ชื่อธนาคาร/หน่วยงาน” (ถ้ามี “เลขที่บัญชี” จะต่อท้ายให้) · ไม่มีหัวตารางจะใช้คอลัมน์ 1 = ลูกค้า, 2 = หน่วยงาน</div>
+  <div class="stats" id="stats"></div>
   <div class="bar">
     <input type="text" id="newCust" placeholder="ชื่อลูกค้าใหม่">
     <button id="addCust">+ เพิ่มลูกค้า</button>
     <input type="text" id="q" placeholder="ค้นหาลูกค้า / ชื่อหน่วยงาน / ประเภท">
+    <button class="ghost" id="exp">ส่งออก Excel</button>
   </div>
   <div id="list"></div>
 </div>
@@ -78,6 +79,7 @@ function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return
 function status(b){if(b.backExt)return 4;if(b.sentExt)return 3;if(b.backCust)return 2;if(b.sentCust)return 1;return 0}
 function days(d){if(!d)return 0;return Math.floor((Date.now()-new Date(d).getTime())/864e5)}
 function late(b){var s=status(b),d=s==1?days(b.sentCust):s==3?days(b.sentExt):0;return d>=14?"ค้างมาแล้ว "+d+" วัน":""}
+function newBank(name,type){return{id:uid(),bank:name||"",type:type||"",sentCust:"",backCust:"",sentExt:"",backExt:""}}
 function render(){
   var cnt=[0,0,0,0,0],total=0;
   data.forEach(function(c){c.banks.forEach(function(b){cnt[status(b)]++;total++})});
@@ -88,7 +90,7 @@ function render(){
   data.forEach(function(c){
     var cm=c.name.toLowerCase().indexOf(q)>-1;
     var rows=c.banks.filter(function(b){
-      return (filter==-1||status(b)==filter)&&(!q||cm||b.bank.toLowerCase().indexOf(q)>-1)});
+      return (filter==-1||status(b)==filter)&&(!q||cm||b.bank.toLowerCase().indexOf(q)>-1||(b.type||"").toLowerCase().indexOf(q)>-1)});
     if((filter!=-1||q)&&!rows.length)return;
     var done=c.banks.filter(function(b){return status(b)==4}).length;
     out+='<div class="cust"><div class="ch"><h2>'+esc(c.name)+'</h2><small>เสร็จ '+done+'/'+c.banks.length+' รายการ</small><button class="ghost" data-a="addbank" data-c="'+c.id+'">+ รายการ</button><button class="x" data-a="delcust" data-c="'+c.id+'">ลบลูกค้า</button></div>';
@@ -96,7 +98,7 @@ function render(){
       out+='<div class="scroll"><table><tr><th>1. ชื่อหน่วยงาน / ประเภท</th><th>2. ส่งให้ลูกค้า</th><th>3. ลูกค้าส่งกลับ</th><th>4. ส่งออกภายนอก</th><th>5. ภายนอกส่งกลับ</th><th>สถานะ</th><th></th></tr>';
       rows.forEach(function(b){
         var s=status(b),k='data-c="'+c.id+'" data-b="'+b.id+'"';
-        out+='<tr><td class="bk"><input type="text" value="'+esc(b.bank)+'" placeholder="ชื่อธนาคาร" data-k="bank" '+k+'></td>';
+        out+='<tr><td class="bk"><input type="text" value="'+esc(b.bank)+'" placeholder="ชื่อธนาคาร" data-k="bank" '+k+'>'+(b.type?'<span class="type">ประเภท: '+esc(b.type)+'</span>':'')+'</td>';
         ["sentCust","backCust","sentExt","backExt"].forEach(function(f){out+='<td><input type="date" value="'+esc(b[f])+'" data-k="'+f+'" '+k+'></td>'});
         out+='<td><span class="badge s'+s+'">'+LABEL[s]+'</span><span class="late">'+late(b)+'</span></td><td><button class="x" data-a="delbank" '+k+'>ลบ</button></td></tr>';
       });
@@ -104,21 +106,89 @@ function render(){
     }else out+='<div class="empty">ยังไม่มีรายการ กด + รายการ เพื่อเพิ่ม</div>';
     out+='</div>';
   });
-  document.getElementById("list").innerHTML=out||'<div class="empty">ยังไม่มีข้อมูล เพิ่มชื่อลูกค้าด้านบนเพื่อเริ่มต้น</div>';
+  document.getElementById("list").innerHTML=out||'<div class="empty">ยังไม่มีข้อมูล เพิ่มชื่อลูกค้าหรือนำเข้าไฟล์ด้านบนเพื่อเริ่มต้น</div>';
 }
 function find(id){return data.filter(function(c){return c.id==id})[0]}
+function say(t){document.getElementById("msg").textContent=t}
+
+/* ---------- นำเข้าไฟล์ ---------- */
+function cell(v){return String(v==null?"":v).replace(/\s+/g," ").trim()}
+function parseRows(rows){
+  var hi=-1,ci=0,bi=1,ai=-1,i,j;
+  for(i=0;i<Math.min(rows.length,12)&&hi<0;i++){
+    var r=rows[i].map(cell),c=-1,b=-1,a=-1;
+    r.forEach(function(t,k){
+      if(/เลขที่/.test(t)){if(a<0)a=k}
+      else if(/สหกรณ์|ลูกค้า/.test(t)){if(c<0)c=k}
+      else if(/ธนาคาร|หน่วยงาน|สถาบัน|ผู้ออก/.test(t)){if(b<0)b=k}
+    });
+    if(c>=0&&b>=0){hi=i;ci=c;bi=b;ai=a}
+  }
+  var out=[];
+  for(i=hi+1;i<rows.length;i++){
+    var r2=rows[i],cn=cell(r2[ci]),bn=cell(r2[bi]);
+    if(!cn||!bn)continue;
+    if(ai>=0&&cell(r2[ai]))bn+=" ("+cell(r2[ai])+")";
+    out.push([cn,bn])
+  }
+  return {pairs:out,header:hi>=0};
+}
+function readBook(buf,name){
+  if(/\.csv$/i.test(name)){
+    var txt=new TextDecoder("utf-8").decode(buf);
+    if(txt.indexOf("\uFFFD")>-1){try{txt=new TextDecoder("windows-874").decode(buf)}catch(e){}}
+    return XLSX.read(txt,{type:"string"})
+  }
+  return XLSX.read(buf,{type:"array"})
+}
+function importFile(inp){
+  var f=inp.files[0];if(!f)return;var type=inp.dataset.type;
+  var fr=new FileReader();
+  fr.onload=function(e){
+    try{
+      var wb=readBook(e.target.result,f.name),ws=wb.Sheets[wb.SheetNames[0]];
+      var res=parseRows(XLSX.utils.sheet_to_json(ws,{header:1,defval:""}));
+      var added=0,skipped=0,newC=0;
+      res.pairs.forEach(function(p){
+        var c=data.filter(function(x){return x.name==p[0]})[0];
+        if(!c){c={id:uid(),name:p[0],banks:[]};data.push(c);newC++}
+        var dup=c.banks.some(function(b){return b.bank==p[1]&&b.type==type});
+        if(dup){skipped++;return}
+        c.banks.push(newBank(p[1],type));added++;
+      });
+      save();render();
+      say("นำเข้า “"+type+"” จาก "+f.name+": เพิ่ม "+added+" รายการ (ลูกค้าใหม่ "+newC+" ราย), ข้ามรายการซ้ำ "+skipped+(res.header?"":" · ไม่พบหัวตาราง ใช้คอลัมน์ 1 และ 2"));
+    }catch(err){say("อ่านไฟล์ไม่สำเร็จ: "+err.message)}
+    inp.value="";
+  };
+  fr.readAsArrayBuffer(f);
+}
+document.querySelectorAll('.up input[type=file]').forEach(function(i){i.onchange=function(){importFile(i)}});
+
+/* ---------- ส่งออก ---------- */
+document.getElementById("exp").onclick=function(){
+  var rows=[["ลูกค้า","ประเภท","ธนาคาร/หน่วยงาน","ส่งให้ลูกค้า","ลูกค้าส่งกลับ","ส่งออกภายนอก","ภายนอกส่งกลับ","สถานะ"]];
+  data.forEach(function(c){c.banks.forEach(function(b){rows.push([c.name,b.type||"",b.bank,b.sentCust,b.backCust,b.sentExt,b.backExt,LABEL[status(b)]])})});
+  if(rows.length<2){say("ยังไม่มีข้อมูลให้ส่งออก");return}
+  try{
+    var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),"ติดตามยืนยันยอด");
+    XLSX.writeFile(wb,"bank-confirm-tracker.xlsx");
+  }catch(e){say("ส่งออกไม่สำเร็จ ลองใช้งานผ่านเบราว์เซอร์หรือดาวน์โหลดไฟล์ HTML ไปเปิดในเครื่อง")}
+};
+
+/* ---------- เหตุการณ์หลัก ---------- */
 document.getElementById("addCust").onclick=function(){
   var i=document.getElementById("newCust"),n=i.value.trim();if(!n)return;
-  data.push({id:uid(),name:n,banks:[{id:uid(),bank:"",sentCust:"",backCust:"",sentExt:"",backExt:""}]});
+  data.push({id:uid(),name:n,banks:[newBank()]});
   i.value="";save();render()};
 document.getElementById("newCust").onkeydown=function(e){if(e.key=="Enter")document.getElementById("addCust").click()};
 document.getElementById("q").oninput=function(e){query=e.target.value.trim();render()};
 document.getElementById("stats").onclick=function(e){var s=e.target.closest(".stat");if(!s)return;filter=+s.dataset.f;render()};
 document.getElementById("list").onclick=function(e){
   var t=e.target.closest("button");if(!t)return;var c=find(t.dataset.c),a=t.dataset.a;
-  if(a=="addbank")c.banks.push({id:uid(),bank:"",sentCust:"",backCust:"",sentExt:"",backExt:""});
-  else if(a=="delcust"){if(!confirm("ลบลูกค้า "+c.name+" และธนาคารทั้งหมด?"))return;data=data.filter(function(x){return x!=c})}
-  else if(a=="delbank"){if(!confirm("ลบรายการธนาคารนี้?"))return;c.banks=c.banks.filter(function(b){return b.id!=t.dataset.b})}
+  if(a=="addbank")c.banks.push(newBank());
+  else if(a=="delcust"){if(!confirm("ลบลูกค้า "+c.name+" และรายการทั้งหมด?"))return;data=data.filter(function(x){return x!=c})}
+  else if(a=="delbank"){if(!confirm("ลบรายการนี้?"))return;c.banks=c.banks.filter(function(b){return b.id!=t.dataset.b})}
   save();render()};
 document.getElementById("list").onchange=function(e){
   var t=e.target;if(!t.dataset.k)return;var c=find(t.dataset.c);
