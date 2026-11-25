@@ -44,6 +44,7 @@ th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--bd);vertica
 th{font-size:13px;color:var(--mu);font-weight:600;background:var(--bg)}
 td.bk{min-width:190px}
 td.bk input{width:100%}
+th.no,td.no{width:56px;text-align:center;color:var(--mu)}
 .badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:13px;white-space:nowrap}
 .s0{background:var(--gyb);color:var(--gy)}.s1{background:var(--wtb);color:var(--wt)}.s2{background:var(--blb);color:var(--bl)}.s3{background:var(--wtb);color:var(--wt)}.s4{background:var(--okb);color:var(--ok)}
 .late{color:var(--rd);font-size:12px;display:block}
@@ -95,10 +96,10 @@ function render(){
     var done=c.banks.filter(function(b){return status(b)==4}).length;
     out+='<div class="cust"><div class="ch"><h2>'+esc(c.name)+'</h2><small>เสร็จ '+done+'/'+c.banks.length+' รายการ</small><button class="ghost" data-a="addbank" data-c="'+c.id+'">+ รายการ</button><button class="x" data-a="delcust" data-c="'+c.id+'">ลบลูกค้า</button></div>';
     if(rows.length){
-      out+='<div class="scroll"><table><tr><th>1. ชื่อหน่วยงาน / ประเภท</th><th>2. ส่งให้ลูกค้า</th><th>3. ลูกค้าส่งกลับ</th><th>4. ส่งออกภายนอก</th><th>5. ภายนอกส่งกลับ</th><th>สถานะ</th><th></th></tr>';
-      rows.forEach(function(b){
+      out+='<div class="scroll"><table><tr><th class="no">ลำดับ</th><th>1. ชื่อหน่วยงาน / ประเภท</th><th>2. ส่งให้ลูกค้า</th><th>3. ลูกค้าส่งกลับ</th><th>4. ส่งออกภายนอก</th><th>5. ภายนอกส่งกลับ</th><th>สถานะ</th><th></th></tr>';
+      rows.forEach(function(b,n){
         var s=status(b),k='data-c="'+c.id+'" data-b="'+b.id+'"';
-        out+='<tr><td class="bk"><input type="text" value="'+esc(b.bank)+'" placeholder="ชื่อธนาคาร" data-k="bank" '+k+'>'+(b.type?'<span class="type">ประเภท: '+esc(b.type)+'</span>':'')+'</td>';
+        out+='<tr><td class="no">'+(n+1)+'</td><td class="bk"><input type="text" value="'+esc(b.bank)+'" placeholder="ชื่อธนาคาร" data-k="bank" '+k+'>'+(b.type?'<span class="type">ประเภท: '+esc(b.type)+'</span>':'')+'</td>';
         ["sentCust","backCust","sentExt","backExt"].forEach(function(f){out+='<td><input type="date" value="'+esc(b[f])+'" data-k="'+f+'" '+k+'></td>'});
         out+='<td><span class="badge s'+s+'">'+LABEL[s]+'</span><span class="late">'+late(b)+'</span></td><td><button class="x" data-a="delbank" '+k+'>ลบ</button></td></tr>';
       });
