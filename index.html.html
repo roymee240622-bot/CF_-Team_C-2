@@ -126,6 +126,7 @@ tr:hover>td.no,tr:hover>td:nth-child(2){background:color-mix(in srgb,var(--acb) 
     <div class="upb"><b>ไฟล์สหกรณ์</b><input type="file" accept=".csv,.xlsx,.xls" data-type="สหกรณ์"></div>
     <div class="upb"><b>เงินลงทุนในหลักทรัพย์/ธนาคาร</b><input type="file" accept=".csv,.xlsx,.xls" data-type="เงินลงทุน"></div>
   </div>
+  <p class="msg" id="msg"></p>
   <div class="stats" id="stats"></div>
   <div id="panel"></div>
   <div class="bar">
@@ -140,30 +141,46 @@ tr:hover>td.no,tr:hover>td:nth-child(2){background:color-mix(in srgb,var(--acb) 
 var KEY="bankconfirm-v1",data=[],filter=-1,query="";
 var LABEL=["ยังไม่ส่งลูกค้า","รอลูกค้าส่งกลับ","รอส่งออกภายนอก","รอภายนอกตอบกลับ","เสร็จสิ้น"];
 function load(){try{var r=localStorage.getItem(KEY);if(r)data=JSON.parse(r)||[]}catch(e){data=[]}}
-var API="https://script.google.com/macros/s/AKfycbw3v2XAecV5pNdoiOIskV29szVpnPHwCvDOwAUduwXqg4d6rfbaNsRneJKsTojSD1XVKw/exec",_t,ready=false;
+var API="https://script.google.com/macros/s/AKfycbw3v2XAecV5pNdoiOIskV29szVpnPHwCvDOwAUduwXqg4d6rfbaNsRneJKsTojSD1XVKw/exec";
+var _t,pend=null,synced={},pullSeq=0,pullAbort=null,_pt;
 function hasAPI(){return /^https:\/\/script\.google\.com\/.+\/exec$/.test(API)}
 function save(){
   try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}
-  clearTimeout(_t);_t=setTimeout(push,800);
+  pend={k:KEY,d:data};
+  clearTimeout(_t);
+  _t=setTimeout(function(){var p=pend;pend=null;if(p)push(p.k,p.d)},800);
 }
-function push(){
-  if(!ready||!hasAPI())return;
+function push(k,d){
+  if(!hasAPI()||!synced[k])return;
   fetch(API,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
-    body:JSON.stringify({key:KEY,data:data})})
+    body:JSON.stringify({key:k,data:d})})
   .catch(function(){say("บันทึกขึ้น Google Sheet ไม่สำเร็จ")});
 }
 function pull(){
-  ready=false;
-  if(!hasAPI()){ready=true;return}
-  fetch(API+"?key="+encodeURIComponent(KEY)).then(function(r){return r.json()})
+  var k=KEY,seq=++pullSeq;
+  if(pullAbort)pullAbort.abort();
+  if(!hasAPI()){synced[k]=true;return}
+  pullAbort=window.AbortController?new AbortController():null;
+  fetch(API+"?key="+encodeURIComponent(k),pullAbort?{signal:pullAbort.signal}:{})
+  .then(function(r){return r.json()})
   .then(function(d){
-    if(d&&d.length){
-      var ln={};data.forEach(function(c){c.banks.forEach(function(b){if(b.note)ln[b.id]=b.note})});
+    if(seq!==pullSeq||k!==KEY)return;
+    if(Array.isArray(d)&&d.length){
+      var ln={};
+      data.forEach(function(c){c.banks.forEach(function(b){if(b.note)ln[b.id]=b.note})});
       d.forEach(function(c){c.banks.forEach(function(b){if(!b.note)b.note=ln[b.id]||""})});
-      data=d;try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}render()}
-    ready=true;
+      if(JSON.stringify(d)!==JSON.stringify(data)){
+        data=d;
+        try{localStorage.setItem(k,JSON.stringify(data))}catch(e){}
+        render();
+      }
+    }
+    synced[k]=true;
   })
-  .catch(function(){say("ดึงข้อมูลจาก Google Sheet ไม่สำเร็จ (ยังไม่ส่งขึ้นชีต เพื่อกันเขียนทับ)")});
+  .catch(function(err){
+    if(err&&err.name==="AbortError")return;
+    if(seq===pullSeq)say("ดึงข้อมูลจาก Google Sheet ไม่สำเร็จ (ยังไม่ส่งขึ้นชีต เพื่อกันเขียนทับ)");
+  });
 }
 function uid(){return Math.random().toString(36).slice(2,9)}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
@@ -376,7 +393,21 @@ function fitOne(t){
 }
 function growOne(t){t.style.height="auto";t.style.height=Math.max(t.scrollHeight,36)+"px"}
 function setNote(t){var c=find(t.dataset.c);if(!c)return;c.banks.forEach(function(b){if(b.id==t.dataset.b)b.note=t.value});save()}
-function fit(){document.querySelectorAll("td.bk textarea").forEach(fitOne);document.querySelectorAll("td.nc textarea").forEach(growOne)}
+function fit(){
+  var bk=[].slice.call(document.querySelectorAll("td.bk textarea")),
+      nt=[].slice.call(document.querySelectorAll("td.nc textarea"));
+  bk.forEach(function(t){t.style.fontSize="15px";t.style.height="auto"});
+  nt.forEach(function(t){t.style.height="auto"});
+  var bh=bk.map(function(t){return t.scrollHeight}),
+      nh=nt.map(function(t){return t.scrollHeight});
+  var pad=0;
+  if(bk[0]){var cs=getComputedStyle(bk[0]);pad=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom)}
+  bk.forEach(function(t,i){
+    if(bh[i]-pad>15*1.3*2+1)fitOne(t);
+    else t.style.height=bh[i]+"px";
+  });
+  nt.forEach(function(t,i){t.style.height=Math.max(nh[i],36)+"px"});
+}
 var _render=render;render=function(){var y=window.scrollY,sl=[].map.call(document.querySelectorAll("#list .scroll"),function(e){return e.scrollLeft});_render();[].forEach.call(document.querySelectorAll("#list .scroll"),function(e,i){if(sl[i])e.scrollLeft=sl[i]});fit();if(window.scrollY!==y)window.scrollTo(0,y)};
 window.addEventListener("resize",fit);
 document.getElementById("list").addEventListener("input",function(e){var t=e.target;if(t.tagName!="TEXTAREA")return;if(t.classList.contains("nt")){growOne(t);setNote(t)}else fitOne(t)});
@@ -385,7 +416,20 @@ var PKEY="bankconfirm-period",per={m:11,y:2026};
 try{var pr=JSON.parse(localStorage.getItem(PKEY));if(pr&&pr.m>=0&&pr.m<=11&&pr.y)per=pr}catch(e){}
 function showPer(){document.getElementById("pl").textContent=MONTHS[per.m]+" "+(per.y+543)}
 function keyFor(p){return(p.y==2026&&p.m==11)?"bankconfirm-v1":"bankconfirm-v1-"+p.y+"-"+p.m}
-function movePer(d){per.m+=d;if(per.m<0){per.m=11;per.y--}else if(per.m>11){per.m=0;per.y++}try{localStorage.setItem(PKEY,JSON.stringify(per))}catch(e){}showPer();KEY=keyFor(per);data=[];filter=-1;query="";document.getElementById("q").value="";panelOpen=false;load();render();pull()}
+function movePer(d){
+  if(pend){clearTimeout(_t);push(pend.k,pend.d);pend=null}
+  ++pullSeq;if(pullAbort)pullAbort.abort();
+  per.m+=d;
+  if(per.m<0){per.m=11;per.y--}else if(per.m>11){per.m=0;per.y++}
+  try{localStorage.setItem(PKEY,JSON.stringify(per))}catch(e){}
+  showPer();
+  KEY=keyFor(per);
+  data=[];filter=-1;query="";
+  document.getElementById("q").value="";
+  panelOpen=false;
+  load();render();
+  clearTimeout(_pt);_pt=setTimeout(pull,350);
+}
 document.getElementById("pm").onclick=function(){movePer(-1)};
 document.getElementById("pn").onclick=function(){movePer(1)};
 showPer();
