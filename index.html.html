@@ -85,6 +85,7 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}}
 function uid(){return Math.random().toString(36).slice(2,9)}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function status(b){if(b.backExt)return 4;if(b.sentExt)return 3;if(b.backCust)return 2;if(b.sentCust)return 1;return 0}
+function picked(b){var tk=b.tk||{};return Object.keys(tk).filter(function(k){return tk[k]})[0]||""}
 function days(d){if(!d)return 0;return Math.floor((Date.now()-new Date(d).getTime())/864e5)}
 function late(b){var s=status(b),d=s==1?days(b.sentCust):s==3?days(b.sentExt):0;return d>=14?"ค้างมาแล้ว "+d+" วัน":""}
 function newBank(name,type){return{id:uid(),bank:name||"",type:type||"",sentCust:"",backCust:"",sentExt:"",backExt:""}}
@@ -124,7 +125,7 @@ function render(){
   data.forEach(function(c){
     var cm=c.name.toLowerCase().indexOf(q)>-1;
     var rows=c.banks.filter(function(b){
-      return (filter==-1||status(b)==filter)&&(!q||cm||b.bank.toLowerCase().indexOf(q)>-1||(b.type||"").toLowerCase().indexOf(q)>-1)});
+      return (filter==-1||status(b)==filter)&&(!q||cm||b.bank.toLowerCase().indexOf(q)>-1||(b.type||"").toLowerCase().indexOf(q)>-1||picked(b).toLowerCase().indexOf(q)>-1)});
     if((filter!=-1||q)&&!rows.length)return;
     var done=c.banks.filter(function(b){return status(b)==4}).length;
     out+='<div class="cust"><div class="ch"><h2>'+esc(c.name)+'</h2><small>เสร็จ '+done+'/'+c.banks.length+' รายการ</small><button class="ghost" data-a="addbank" data-c="'+c.id+'">+ รายการ</button><button class="x" data-a="delcust" data-c="'+c.id+'">ลบลูกค้า</button></div>';
@@ -132,7 +133,7 @@ function render(){
       out+='<div class="scroll"><table><tr><th class="no">ลำดับ</th><th>1. ชื่อหน่วยงาน / ประเภท</th><th>2. ส่งให้ลูกค้า</th><th>3. ลูกค้าส่งกลับ</th><th>4. ส่งออกภายนอก</th><th>5. ภายนอกส่งกลับ</th><th>สถานะ</th><th></th></tr>';
       rows.forEach(function(b,n){
         var s=status(b),k='data-c="'+c.id+'" data-b="'+b.id+'"';
-        out+='<tr><td class="no">'+(n+1)+'</td><td class="bk"><input type="text" value="'+esc(b.bank)+'" placeholder="ชื่อธนาคาร" data-k="bank" '+k+'>'+(b.type?'<span class="type">ประเภท: '+esc(b.type)+'</span>':'')+'</td>';
+        out+='<tr><td class="no">'+(n+1)+'</td><td class="bk"><input type="text" value="'+esc(b.bank)+'" placeholder="ชื่อธนาคาร" data-k="bank" '+k+'>'+(b.type?'<span class="type">ประเภท: '+esc(b.type)+(picked(b)?' · '+esc(picked(b)):'')+'</span>':'')+'</td>';
         ["sentCust","backCust","sentExt","backExt"].forEach(function(f){out+='<td><input type="date" value="'+esc(b[f])+'" data-k="'+f+'" '+k+'></td>'});
         out+='<td><span class="badge s'+s+'">'+LABEL[s]+'</span><span class="late">'+late(b)+'</span></td><td><button class="x" data-a="delbank" '+k+'>ลบ</button></td></tr>';
       });
@@ -199,8 +200,8 @@ function importFile(inp){
 }
 document.querySelectorAll('.up input[type=file]').forEach(function(i){i.onchange=function(){importFile(i)}});
 document.getElementById("exp").onclick=function(){
-  var rows=[["ลูกค้า","ประเภท","ธนาคาร/หน่วยงาน","ส่งให้ลูกค้า","ลูกค้าส่งกลับ","ส่งออกภายนอก","ภายนอกส่งกลับ","สถานะ"]];
-  data.forEach(function(c){c.banks.forEach(function(b){rows.push([c.name,b.type||"",b.bank,b.sentCust,b.backCust,b.sentExt,b.backExt,LABEL[status(b)]])})});
+  var rows=[["ลูกค้า","ประเภท","รายการที่ขอยืนยัน","ธนาคาร/หน่วยงาน","ส่งให้ลูกค้า","ลูกค้าส่งกลับ","ส่งออกภายนอก","ภายนอกส่งกลับ","สถานะ"]];
+data.forEach(function(c){c.banks.forEach(function(b){rows.push([c.name,b.type||"",picked(b),b.bank,b.sentCust,b.backCust,b.sentExt,b.backExt,LABEL[status(b)]])})});
   if(rows.length<2){say("ยังไม่มีข้อมูลให้ส่งออก");return}
   try{
     var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),"ติดตามยืนยันยอด");
