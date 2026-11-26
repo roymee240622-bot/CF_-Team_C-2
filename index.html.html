@@ -6,15 +6,6 @@
 <title>ยืนยันยอดภายนอกทีม C-2 </title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-.tb{display:block;font-size:11px;margin-top:2px}
-.flags{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:6px}
-.sw{display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;color:var(--mu)}
-.sw input{position:absolute;opacity:0;width:0;height:0}
-.sw i{position:relative;width:32px;height:18px;border-radius:99px;background:var(--bd);transition:.15s;flex:none}
-.sw i:after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:.15s}
-.sw input:checked+i{background:var(--ok)}
-.sw input:checked+i:after{left:16px}
-.sw input:checked~span{color:var(--tx)}
 :root{--bg:#f6f7f9;--card:#fff;--tx:#1b2430;--mu:#6b7683;--bd:#dfe3e8;--ac:#1f5fbf;--ok:#1a7f4b;--okb:#e0f3e8;--wt:#9a6700;--wtb:#fff1cc;--rd:#b42318;--rdb:#fde3e0;--gy:#59636e;--gyb:#eceff2;--bl:#1f5fbf;--blb:#e3edfb;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171c;--card:#1d222a;--tx:#e8ebef;--mu:#98a2ae;--bd:#2f3640;--ac:#6ea4f5;--ok:#5fd394;--okb:#16352a;--wt:#f0c050;--wtb:#3a3014;--rd:#ff8f84;--rdb:#3d1f1c;--gy:#aab3bd;--gyb:#272d36;--bl:#8db8f8;--blb:#1b2c47;color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#14171c;--card:#1d222a;--tx:#e8ebef;--mu:#98a2ae;--bd:#2f3640;--ac:#6ea4f5;--ok:#5fd394;--okb:#16352a;--wt:#f0c050;--wtb:#3a3014;--rd:#ff8f84;--rdb:#3d1f1c;--gy:#aab3bd;--gyb:#272d36;--bl:#8db8f8;--blb:#1b2c47;color-scheme:dark}
@@ -82,18 +73,6 @@ th.no,td.no{width:56px;text-align:center;color:var(--mu)}
 <script>
 var KEY="bankconfirm-v1",data=[],filter=-1,query="";
 var LABEL=["ยังไม่ส่งลูกค้า","รอลูกค้าส่งกลับ","รอส่งออกภายนอก","รอภายนอกตอบกลับ","เสร็จสิ้น"];
-var FLAGS={
-  "สหกรณ์":[["dep","เงินฝาก"],["loan","เงินให้กู้"],["borrow","กู้ยืม"],["inv","เงินลงทุน"],["recv","เงินรับฝาก"]],
-  "เงินลงทุน":[["guar","ค้ำประกัน"],["dep","เงินฝาก"]]
-};
-function flagsHtml(b,k){
-  var list=FLAGS[b.type];if(!list)return "";
-  var h='<div class="flags">';
-  list.forEach(function(f){
-    h+='<label class="sw"><input type="checkbox" data-flag="'+f[0]+'" '+k+((b.flags&&b.flags[f[0]])?' checked':'')+'><i></i><span>'+f[1]+'</span></label>';
-  });
-  return h+'</div>';
-}
 function load(){try{var r=localStorage.getItem(KEY);if(r)data=JSON.parse(r)||[]}catch(e){data=[]}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}}
 function uid(){return Math.random().toString(36).slice(2,9)}
@@ -101,15 +80,11 @@ function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return
 function status(b){if(b.backExt)return 4;if(b.sentExt)return 3;if(b.backCust)return 2;if(b.sentCust)return 1;return 0}
 function days(d){if(!d)return 0;return Math.floor((Date.now()-new Date(d).getTime())/864e5)}
 function late(b){var s=status(b),d=s==1?days(b.sentCust):s==3?days(b.sentExt):0;return d>=14?"ค้างมาแล้ว "+d+" วัน":""}
-function newBank(name,type){return{id:uid(),bank:name||"",type:type||"",,flags:{},sentCust:"",backCust:"",sentExt:"",backExt:""}}
+function newBank(name,type){return{id:uid(),bank:name||"",type:type||"",sentCust:"",backCust:"",sentExt:"",backExt:""}}
 function render(){
-  var cnt=[0,0,0,0,0],total=0,tc={};
-data.forEach(function(c){c.banks.forEach(function(b){
-  cnt[status(b)]++;total++;
-  var t=b.type||"ธนาคาร";tc[t]=(tc[t]||0)+1;
-})});
-var h='<div class="stat'+(filter==-1?' on':'')+'" data-f="-1"><b>'+total+'</b><span>ทั้งหมด</span>'
-  +'<span class="tb">ธนาคาร '+(tc["ธนาคาร"]||0)+' · สหกรณ์ '+(tc["สหกรณ์"]||0)+' · ลงทุน '+(tc["เงินลงทุน"]||0)+'</span></div>';
+  var cnt=[0,0,0,0,0],total=0;
+  data.forEach(function(c){c.banks.forEach(function(b){cnt[status(b)]++;total++})});
+  var h='<div class="stat'+(filter==-1?' on':'')+'" data-f="-1"><b>'+total+'</b><span>ทั้งหมด</span></div>';
   for(var i=0;i<5;i++)h+='<div class="stat'+(filter==i?' on':'')+'" data-f="'+i+'"><b>'+cnt[i]+'</b><span>'+LABEL[i]+'</span></div>';
   document.getElementById("stats").innerHTML=h;
   var out="",q=query.toLowerCase();
@@ -203,18 +178,10 @@ document.getElementById("exp").onclick=function(){
 };
 
 /* ---------- เหตุการณ์หลัก ---------- */
-document.getElementById("list").onchange=function(e){
-  var t=e.target,c=find(t.dataset.c);if(!c)return;
-  if(t.dataset.flag){
-    c.banks.forEach(function(b){
-      if(b.id==t.dataset.b){b.flags=b.flags||{};b.flags[t.dataset.flag]=t.checked}
-    });
-  }else if(t.dataset.k){
-    c.banks.forEach(function(b){
-      if(b.id==t.dataset.b)b[t.dataset.k]=t.value;
-    });
-  }else return;
-  save();render()};
+document.getElementById("addCust").onclick=function(){
+  var i=document.getElementById("newCust"),n=i.value.trim();if(!n)return;
+  data.push({id:uid(),name:n,banks:[newBank()]});
+  i.value="";save();render()};
 document.getElementById("newCust").onkeydown=function(e){if(e.key=="Enter")document.getElementById("addCust").click()};
 document.getElementById("q").oninput=function(e){query=e.target.value.trim();render()};
 document.getElementById("stats").onclick=function(e){var s=e.target.closest(".stat");if(!s)return;filter=+s.dataset.f;render()};
