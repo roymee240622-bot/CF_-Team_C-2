@@ -89,28 +89,29 @@ function late(b){var s=status(b),d=s==1?days(b.sentCust):s==3?days(b.sentExt):0;
 function newBank(name,type){return{id:uid(),bank:name||"",type:type||"",sentCust:"",backCust:"",sentExt:"",backExt:""}}
 var OPT={"สหกรณ์":["เงินฝาก","เงินให้กู้ยืม","เงินกู้ยืม","เงินลงทุน","เงินรับฝาก"],"เงินลงทุน":["เงินฝาก","เงินกู้ยืม","เงินลงทุน"]};
 var panelOpen=false;
-function hasType(c,t){return c.banks.some(function(b){return b.type==t})}
-function setHtml(c,t){
-  if(!hasType(c,t))return '<span class="type">—</span>';
-  var tk=(c.tk&&c.tk[t])||{};
-  return OPT[t].map(function(o){return '<label class="ck"><input type="checkbox" data-c="'+c.id+'" data-t="'+esc(t)+'" data-o="'+esc(o)+'"'+(tk[o]?' checked':'')+'> '+o+'</label>'}).join("");
+function setHtml(b){
+  if(!OPT[b.type])return '<span class="type">—</span>';
+  var tk=b.tk||{};
+  return OPT[b.type].map(function(o){return '<label class="ck"><input type="checkbox" data-c="'+b.cid+'" data-b="'+b.id+'" data-o="'+esc(o)+'"'+(tk[o]?' checked':'')+'> '+o+'</label>'}).join("");
 }
-function renderPanel(){
+function renderPanel(total){
   var p=document.getElementById("panel");
   if(!panelOpen){p.innerHTML="";return}
-  var h='<div class="panel"><h3>สหกรณ์ '+data.length+' แห่ง · ติ๊กรายการที่ขอยืนยัน</h3><div class="scroll"><table><tr><th class="no">ลำดับ</th><th>สหกรณ์</th><th>ไฟล์สหกรณ์</th><th>ไฟล์เงินลงทุนในหลักทรัพย์/ธนาคาร</th></tr>';
-  data.forEach(function(c,n){h+='<tr><td class="no">'+(n+1)+'</td><td>'+esc(c.name)+'</td><td>'+setHtml(c,"สหกรณ์")+'</td><td>'+setHtml(c,"เงินลงทุน")+'</td></tr>'});
-  if(!data.length)h+='<tr><td colspan="4" class="empty">ยังไม่มีสหกรณ์</td></tr>';
+  var h='<div class="panel"><h3>ข้อมูลยืนยันยอดภายนอก '+total+' รายการ · ติ๊กรายการที่ขอยืนยัน</h3><div class="scroll"><table><tr><th class="no">ลำดับ</th><th>สหกรณ์</th><th>ชื่อหน่วยงาน</th><th>ประเภทไฟล์</th><th>รายการที่ขอยืนยัน</th></tr>';
+  var n=0;
+  data.forEach(function(c){c.banks.forEach(function(b){n++;b.cid=c.id;
+    h+='<tr><td class="no">'+n+'</td><td>'+esc(c.name)+'</td><td>'+esc(b.bank)+'</td><td>'+esc(b.type||"-")+'</td><td>'+setHtml(b)+'</td></tr>'})});
+  if(!n)h+='<tr><td colspan="5" class="empty">ยังไม่มีรายการ</td></tr>';
   p.innerHTML=h+'</table></div></div>';
 }
 function render(){
   var cnt=[0,0,0,0,0],total=0;
   data.forEach(function(c){c.banks.forEach(function(b){cnt[status(b)]++;total++})});
-  var h='<div class="stat'+(panelOpen?' on':'')+'" data-p="1"><b>'+data.length+'</b><span>สหกรณ์ (แห่ง) · คลิกเพื่อติ๊กยืนยัน</span></div>';
+  var h='<div class="stat'+(panelOpen?' on':'')+'" data-p="1"><b>'+total+'</b><span>ข้อมูลยืนยันยอดภายนอก · คลิกเพื่อติ๊ก</span></div>';
   h+='<div class="stat'+(filter==-1?' on':'')+'" data-f="-1"><b>'+total+'</b><span>ทั้งหมด</span></div>';
   for(var i=0;i<5;i++)h+='<div class="stat'+(filter==i?' on':'')+'" data-f="'+i+'"><b>'+cnt[i]+'</b><span>'+LABEL[i]+'</span></div>';
   document.getElementById("stats").innerHTML=h;
-  renderPanel();
+  renderPanel(total);
   var out="",q=query.toLowerCase();
   data.forEach(function(c){
     var cm=c.name.toLowerCase().indexOf(q)>-1;
@@ -205,7 +206,7 @@ document.getElementById("q").oninput=function(e){query=e.target.value.trim();ren
 document.getElementById("stats").onclick=function(e){var s=e.target.closest(".stat");if(!s)return;if(s.dataset.p){panelOpen=!panelOpen;render();return}if(s.dataset.f==null)return;filter=+s.dataset.f;render()};
 document.getElementById("panel").onchange=function(e){
   var t=e.target;if(!t.dataset.o)return;var c=find(t.dataset.c);
-  c.tk=c.tk||{};c.tk[t.dataset.t]=c.tk[t.dataset.t]||{};c.tk[t.dataset.t][t.dataset.o]=t.checked;save()};
+  c.banks.forEach(function(b){if(b.id==t.dataset.b){b.tk=b.tk||{};b.tk[t.dataset.o]=t.checked}});save()};
 document.getElementById("list").onclick=function(e){
   var t=e.target.closest("button");if(!t)return;var c=find(t.dataset.c),a=t.dataset.a;
   if(a=="addbank")c.banks.push(newBank());
