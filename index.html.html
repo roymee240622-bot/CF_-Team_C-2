@@ -284,13 +284,27 @@ document.getElementById("list").onclick=function(e){
   else if(a=="delcust"){if(!confirm("ลบลูกค้า "+c.name+" และรายการทั้งหมด?"))return;data=data.filter(function(x){return x!=c})}
   else if(a=="delbank"){if(!confirm("ลบรายการนี้?"))return;c.banks=c.banks.filter(function(b){return b.id!=t.dataset.b})}
   save();render()};
-document.getElementById("list").addEventListener("focusout",function(e){var t=e.target;if(t.type=="date"&&t.value&&parseInt(t.value,10)<1900)render()});
+document.getElementById("list").addEventListener("focusout",function(e){var t=e.target;if(t.type=="date"&&t.value&&parseInt(t.value,10)<1900){var c=find(t.dataset.c),bb=c&&c.banks.filter(function(b){return b.id==t.dataset.b})[0];t.value=(bb&&bb[t.dataset.k])||""}});
 document.getElementById("list").onchange=function(e){
   var t=e.target;if(!t.dataset.k)return;
   if(t.type=="date"&&t.value&&parseInt(t.value,10)<1900)return;
   var c=find(t.dataset.c);
-  c.banks.forEach(function(b){if(b.id==t.dataset.b)b[t.dataset.k]=t.value});
-  save();render()};
+  var hb;c.banks.forEach(function(b){if(b.id==t.dataset.b){b[t.dataset.k]=t.value;hb=b}});
+  save();
+  if(t.type=="date"&&hb){liveUpdate(t,hb);return}
+  render()};
+function liveUpdate(t,b){
+  var tr=t.closest("tr"),s=status(b),bd=tr.querySelector(".badge");
+  bd.className="badge s"+s;bd.textContent=LABEL[s];
+  tr.querySelector(".late").textContent=late(b);
+  tr.querySelectorAll("button.tick").forEach(function(k){var on=!!b[k.dataset.f];k.classList.toggle("on",on);k.title=on?"ล้างวันที่":"ใส่วันที่วันนี้"});
+  var cnt=[0,0,0,0,0],total=0;
+  data.forEach(function(c){c.banks.forEach(function(x){cnt[status(x)]++;total++})});
+  var st=document.querySelectorAll("#stats .stat b");
+  if(st.length==7){st[0].textContent=total;st[1].textContent=total;for(var i=0;i<5;i++)st[i+2].textContent=cnt[i]}
+  var cu=t.closest(".cust"),c2=find(t.dataset.c),sm=cu&&cu.querySelector(".ch small");
+  if(sm&&c2)sm.textContent="เสร็จ "+c2.banks.filter(function(x){return status(x)==4}).length+"/"+c2.banks.length+" รายการ";
+}
 function fitOne(t){
   var size=15,min=9;
   t.style.fontSize=size+"px";
