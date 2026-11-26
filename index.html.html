@@ -126,7 +126,28 @@ th{background:color-mix(in srgb,var(--gyb) 45%,var(--card))}
 var KEY="bankconfirm-v1",data=[],filter=-1,query="";
 var LABEL=["ยังไม่ส่งลูกค้า","รอลูกค้าส่งกลับ","รอส่งออกภายนอก","รอภายนอกตอบกลับ","เสร็จสิ้น"];
 function load(){try{var r=localStorage.getItem(KEY);if(r)data=JSON.parse(r)||[]}catch(e){data=[]}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}}
+var API="https://script.google.com/macros/s/AKfycbyuQvf-AqiH9AgU4B124_vv_Hq33WuTh-LBGNy3Hi-7_UB7J4yDIGxXY1x89rRcpzi6/exec",_t,ready=false;
+function hasAPI(){return /^https:\/\/script\.google\.com\/.+\/exec$/.test(API)}
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}
+  clearTimeout(_t);_t=setTimeout(push,800);
+}
+function push(){
+  if(!ready||!hasAPI())return;
+  fetch(API,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body:JSON.stringify({key:KEY,data:data})})
+  .catch(function(){say("บันทึกขึ้น Google Sheet ไม่สำเร็จ")});
+}
+function pull(){
+  ready=false;
+  if(!hasAPI()){ready=true;return}
+  fetch(API+"?key="+encodeURIComponent(KEY)).then(function(r){return r.json()})
+  .then(function(d){
+    if(d&&d.length){data=d;try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}render()}
+    ready=true;
+  })
+  .catch(function(){say("ดึงข้อมูลจาก Google Sheet ไม่สำเร็จ (ยังไม่ส่งขึ้นชีต เพื่อกันเขียนทับ)")});
+}
 function uid(){return Math.random().toString(36).slice(2,9)}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function status(b){if(b.backExt)return 4;if(b.sentExt)return 3;if(b.backCust)return 2;if(b.sentCust)return 1;return 0}
@@ -339,14 +360,14 @@ var PKEY="bankconfirm-period",per={m:11,y:2026};
 try{var pr=JSON.parse(localStorage.getItem(PKEY));if(pr&&pr.m>=0&&pr.m<=11&&pr.y)per=pr}catch(e){}
 function showPer(){document.getElementById("pl").textContent=MONTHS[per.m]+" "+(per.y+543)}
 function keyFor(p){return(p.y==2026&&p.m==11)?"bankconfirm-v1":"bankconfirm-v1-"+p.y+"-"+p.m}
-function movePer(d){per.m+=d;if(per.m<0){per.m=11;per.y--}else if(per.m>11){per.m=0;per.y++}try{localStorage.setItem(PKEY,JSON.stringify(per))}catch(e){}showPer();KEY=keyFor(per);data=[];filter=-1;query="";document.getElementById("q").value="";panelOpen=false;load();render()}
+function movePer(d){per.m+=d;if(per.m<0){per.m=11;per.y--}else if(per.m>11){per.m=0;per.y++}try{localStorage.setItem(PKEY,JSON.stringify(per))}catch(e){}showPer();KEY=keyFor(per);data=[];filter=-1;query="";document.getElementById("q").value="";panelOpen=false;load();render();pull()}
 document.getElementById("pm").onclick=function(){movePer(-1)};
 document.getElementById("pn").onclick=function(){movePer(1)};
 showPer();
 KEY=keyFor(per);
 load();
 data.forEach(function(c){c.banks.forEach(function(b){if(b.type=="ธนาคาร")b.bank=b.bank.replace(/\s*\((?!มหาชน)[^)]*\)\s*$/,"")})});
-save();render();
+save();render();pull();
 </script>
 </body>
 </html>
