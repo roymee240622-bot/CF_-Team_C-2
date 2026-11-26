@@ -215,9 +215,16 @@ document.getElementById("newCust").onkeydown=function(e){if(e.key=="Enter")docum
 document.getElementById("q").oninput=function(e){query=e.target.value.trim();render()};
 document.getElementById("stats").onclick=function(e){var s=e.target.closest(".stat");if(!s)return;if(s.dataset.p){panelOpen=!panelOpen;render();return}if(s.dataset.f==null)return;panelOpen=false;filter=+s.dataset.f;render()};
 document.getElementById("panel").onchange=function(e){
-  var t=e.target;if(!t.dataset.o)return;var c=find(t.dataset.c);
-  if(t.checked)t.closest("td").querySelectorAll("input").forEach(function(i){if(i!==t)i.checked=false});
-  c.banks.forEach(function(b){if(b.id==t.dataset.b){b.tk={};if(t.checked)b.tk[t.dataset.o]=true}});save()};
+  var t=e.target;if(!t.dataset.o)return;var c=find(t.dataset.c),o=t.dataset.o,hit={},go=false;
+  c.banks.forEach(function(b){
+    if(b.id==t.dataset.b)go=true;
+    if(!go)return;
+    if(b.id==t.dataset.b||(t.checked&&OPT[b.type]&&OPT[b.type].indexOf(o)>-1)){
+      b.tk={};if(t.checked)b.tk[o]=true;hit[b.id]=1}
+  });
+  t.closest(".cust").querySelectorAll("input").forEach(function(i){
+    if(hit[i.dataset.b])i.checked=t.checked&&i.dataset.o==o});
+  save()};
 document.getElementById("list").onclick=function(e){
   var t=e.target.closest("button");if(!t)return;var c=find(t.dataset.c),a=t.dataset.a;
   if(a=="addbank")c.banks.push(newBank());
