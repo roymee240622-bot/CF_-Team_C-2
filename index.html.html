@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ยืนยันยอดภายนอกทีม C-2 </title>
+<title>ยืนยันยอดภายนอกทีม C-2</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{--bg:#f6f7f9;--card:#fff;--tx:#1b2430;--mu:#6b7683;--bd:#dfe3e8;--ac:#1f5fbf;--ok:#1a7f4b;--okb:#e0f3e8;--wt:#9a6700;--wtb:#fff1cc;--rd:#b42318;--rdb:#fde3e0;--gy:#59636e;--gyb:#eceff2;--bl:#1f5fbf;--blb:#e3edfb;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
@@ -26,6 +26,11 @@ h1{font-size:22px;margin:0 0 4px}
 .stat b{display:block;font-size:22px}
 .stat span{font-size:13px;color:var(--mu)}
 .stat.on{outline:2px solid var(--ac)}
+.stat.info{cursor:default;border-style:dashed}
+.panel{background:var(--card);border:1px solid var(--bd);border-radius:12px;margin-bottom:16px;max-height:60vh;overflow-y:auto}
+.panel h3{margin:0;padding:12px 14px;font-size:16px;border-bottom:1px solid var(--bd)}
+.ck{display:inline-flex;align-items:center;gap:4px;margin-right:14px;white-space:nowrap;font-size:14px}
+.ck input{width:auto}
 .bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
 input,button,select{font:inherit;color:var(--tx)}
 input[type=text],input[type=date]{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:7px 10px;min-width:0}
@@ -62,6 +67,7 @@ th.no,td.no{width:56px;text-align:center;color:var(--mu)}
   </div>
   <div class="msg" id="msg">นำเข้าไฟล์ที่มีคอลัมน์ “ชื่อสหกรณ์/ลูกค้า” และ “ชื่อธนาคาร/หน่วยงาน” (ถ้ามี “เลขที่บัญชี” จะต่อท้ายให้) · ไม่มีหัวตารางจะใช้คอลัมน์ 1 = ลูกค้า, 2 = หน่วยงาน</div>
   <div class="stats" id="stats"></div>
+  <div id="panel"></div>
   <div class="bar">
     <input type="text" id="newCust" placeholder="ชื่อลูกค้าใหม่">
     <button id="addCust">+ เพิ่มลูกค้า</button>
@@ -81,12 +87,30 @@ function status(b){if(b.backExt)return 4;if(b.sentExt)return 3;if(b.backCust)ret
 function days(d){if(!d)return 0;return Math.floor((Date.now()-new Date(d).getTime())/864e5)}
 function late(b){var s=status(b),d=s==1?days(b.sentCust):s==3?days(b.sentExt):0;return d>=14?"ค้างมาแล้ว "+d+" วัน":""}
 function newBank(name,type){return{id:uid(),bank:name||"",type:type||"",sentCust:"",backCust:"",sentExt:"",backExt:""}}
+var OPT={"สหกรณ์":["เงินฝาก","เงินให้กู้ยืม","เงินกู้ยืม","เงินลงทุน","เงินรับฝาก"],"เงินลงทุน":["เงินฝาก","เงินกู้ยืม","เงินลงทุน"]};
+var panelOpen=false;
+function hasType(c,t){return c.banks.some(function(b){return b.type==t})}
+function setHtml(c,t){
+  if(!hasType(c,t))return '<span class="type">—</span>';
+  var tk=(c.tk&&c.tk[t])||{};
+  return OPT[t].map(function(o){return '<label class="ck"><input type="checkbox" data-c="'+c.id+'" data-t="'+esc(t)+'" data-o="'+esc(o)+'"'+(tk[o]?' checked':'')+'> '+o+'</label>'}).join("");
+}
+function renderPanel(){
+  var p=document.getElementById("panel");
+  if(!panelOpen){p.innerHTML="";return}
+  var h='<div class="panel"><h3>สหกรณ์ '+data.length+' แห่ง · ติ๊กรายการที่ขอยืนยัน</h3><div class="scroll"><table><tr><th class="no">ลำดับ</th><th>สหกรณ์</th><th>ไฟล์สหกรณ์</th><th>ไฟล์เงินลงทุนในหลักทรัพย์/ธนาคาร</th></tr>';
+  data.forEach(function(c,n){h+='<tr><td class="no">'+(n+1)+'</td><td>'+esc(c.name)+'</td><td>'+setHtml(c,"สหกรณ์")+'</td><td>'+setHtml(c,"เงินลงทุน")+'</td></tr>'});
+  if(!data.length)h+='<tr><td colspan="4" class="empty">ยังไม่มีสหกรณ์</td></tr>';
+  p.innerHTML=h+'</table></div></div>';
+}
 function render(){
   var cnt=[0,0,0,0,0],total=0;
   data.forEach(function(c){c.banks.forEach(function(b){cnt[status(b)]++;total++})});
-  var h='<div class="stat'+(filter==-1?' on':'')+'" data-f="-1"><b>'+total+'</b><span>ทั้งหมด</span></div>';
+  var h='<div class="stat'+(panelOpen?' on':'')+'" data-p="1"><b>'+data.length+'</b><span>สหกรณ์ (แห่ง) · คลิกเพื่อติ๊กยืนยัน</span></div>';
+  h+='<div class="stat'+(filter==-1?' on':'')+'" data-f="-1"><b>'+total+'</b><span>ทั้งหมด</span></div>';
   for(var i=0;i<5;i++)h+='<div class="stat'+(filter==i?' on':'')+'" data-f="'+i+'"><b>'+cnt[i]+'</b><span>'+LABEL[i]+'</span></div>';
   document.getElementById("stats").innerHTML=h;
+  renderPanel();
   var out="",q=query.toLowerCase();
   data.forEach(function(c){
     var cm=c.name.toLowerCase().indexOf(q)>-1;
@@ -111,8 +135,6 @@ function render(){
 }
 function find(id){return data.filter(function(c){return c.id==id})[0]}
 function say(t){document.getElementById("msg").textContent=t}
-
-/* ---------- นำเข้าไฟล์ ---------- */
 function cell(v){return String(v==null?"":v).replace(/\s+/g," ").trim()}
 function parseRows(rows){
   var hi=-1,ci=0,bi=1,ai=-1,i,j;
@@ -165,8 +187,6 @@ function importFile(inp){
   fr.readAsArrayBuffer(f);
 }
 document.querySelectorAll('.up input[type=file]').forEach(function(i){i.onchange=function(){importFile(i)}});
-
-/* ---------- ส่งออก ---------- */
 document.getElementById("exp").onclick=function(){
   var rows=[["ลูกค้า","ประเภท","ธนาคาร/หน่วยงาน","ส่งให้ลูกค้า","ลูกค้าส่งกลับ","ส่งออกภายนอก","ภายนอกส่งกลับ","สถานะ"]];
   data.forEach(function(c){c.banks.forEach(function(b){rows.push([c.name,b.type||"",b.bank,b.sentCust,b.backCust,b.sentExt,b.backExt,LABEL[status(b)]])})});
@@ -176,15 +196,16 @@ document.getElementById("exp").onclick=function(){
     XLSX.writeFile(wb,"bank-confirm-tracker.xlsx");
   }catch(e){say("ส่งออกไม่สำเร็จ ลองใช้งานผ่านเบราว์เซอร์หรือดาวน์โหลดไฟล์ HTML ไปเปิดในเครื่อง")}
 };
-
-/* ---------- เหตุการณ์หลัก ---------- */
 document.getElementById("addCust").onclick=function(){
   var i=document.getElementById("newCust"),n=i.value.trim();if(!n)return;
   data.push({id:uid(),name:n,banks:[newBank()]});
   i.value="";save();render()};
 document.getElementById("newCust").onkeydown=function(e){if(e.key=="Enter")document.getElementById("addCust").click()};
 document.getElementById("q").oninput=function(e){query=e.target.value.trim();render()};
-document.getElementById("stats").onclick=function(e){var s=e.target.closest(".stat");if(!s)return;filter=+s.dataset.f;render()};
+document.getElementById("stats").onclick=function(e){var s=e.target.closest(".stat");if(!s)return;if(s.dataset.p){panelOpen=!panelOpen;render();return}if(s.dataset.f==null)return;filter=+s.dataset.f;render()};
+document.getElementById("panel").onchange=function(e){
+  var t=e.target;if(!t.dataset.o)return;var c=find(t.dataset.c);
+  c.tk=c.tk||{};c.tk[t.dataset.t]=c.tk[t.dataset.t]||{};c.tk[t.dataset.t][t.dataset.o]=t.checked;save()};
 document.getElementById("list").onclick=function(e){
   var t=e.target.closest("button");if(!t)return;var c=find(t.dataset.c),a=t.dataset.a;
   if(a=="addbank")c.banks.push(newBank());
