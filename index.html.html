@@ -115,8 +115,8 @@ function render(){
   var cnt=[0,0,0,0,0],total=0;
   data.forEach(function(c){c.banks.forEach(function(b){cnt[status(b)]++;total++})});
   var h='<div class="stat'+(panelOpen?' on':'')+'" data-p="1"><b>'+total+'</b><span>ข้อมูลยืนยันยอดภายนอก · คลิกเพื่อติ๊ก</span></div>';
-  h+='<div class="stat'+(filter==-1?' on':'')+'" data-f="-1"><b>'+total+'</b><span>ทั้งหมด</span></div>';
-  for(var i=0;i<5;i++)h+='<div class="stat'+(filter==i?' on':'')+'" data-f="'+i+'"><b>'+cnt[i]+'</b><span>'+LABEL[i]+'</span></div>';
+  h+='<div class="stat'+(!panelOpen&&filter==-1?' on':'')+'" data-f="-1"><b>'+total+'</b><span>ทั้งหมด</span></div>';
+  for(var i=0;i<5;i++)h+='<div class="stat'+(!panelOpen&&filter==i?' on':'')+'" data-f="'+i+'"><b>'+cnt[i]+'</b><span>'+LABEL[i]+'</span></div>';
   document.getElementById("stats").innerHTML=h;
   renderPanel(total);
   var out="",q=query.toLowerCase();
@@ -140,6 +140,8 @@ function render(){
     out+='</div>';
   });
   document.getElementById("list").innerHTML=out||'<div class="empty">ยังไม่มีข้อมูล เพิ่มชื่อลูกค้าหรือนำเข้าไฟล์ด้านบนเพื่อเริ่มต้น</div>';
+  if(panelOpen)document.getElementById("list").innerHTML="";
+  document.querySelector(".bar").style.display=panelOpen?"none":"";
 }
 function find(id){return data.filter(function(c){return c.id==id})[0]}
 function say(t){document.getElementById("msg").textContent=t}
@@ -210,7 +212,7 @@ document.getElementById("addCust").onclick=function(){
   i.value="";save();render()};
 document.getElementById("newCust").onkeydown=function(e){if(e.key=="Enter")document.getElementById("addCust").click()};
 document.getElementById("q").oninput=function(e){query=e.target.value.trim();render()};
-document.getElementById("stats").onclick=function(e){var s=e.target.closest(".stat");if(!s)return;if(s.dataset.p){panelOpen=!panelOpen;render();return}if(s.dataset.f==null)return;filter=+s.dataset.f;render()};
+document.getElementById("stats").onclick=function(e){var s=e.target.closest(".stat");if(!s)return;if(s.dataset.p){panelOpen=!panelOpen;render();return}if(s.dataset.f==null)return;panelOpen=false;filter=+s.dataset.f;render()};
 document.getElementById("panel").onchange=function(e){
   var t=e.target;if(!t.dataset.o)return;var c=find(t.dataset.c);
   c.banks.forEach(function(b){if(b.id==t.dataset.b){b.tk=b.tk||{};b.tk[t.dataset.o]=t.checked}});save()};
