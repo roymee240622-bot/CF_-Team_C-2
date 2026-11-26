@@ -92,8 +92,8 @@ var OPT={"สหกรณ์":["เงินฝาก","เงินให้ก
 var panelOpen=false;
 function setHtml(b){
   if(!OPT[b.type])return '<span class="type">—</span>';
-  var tk=b.tk||{};
-  return OPT[b.type].map(function(o){return '<label class="ck"><input type="checkbox" data-c="'+b.cid+'" data-b="'+b.id+'" data-o="'+esc(o)+'"'+(tk[o]?' checked':'')+'> '+o+'</label>'}).join("");
+  var tk=b.tk||{},pick=OPT[b.type].filter(function(o){return tk[o]})[0];
+  return OPT[b.type].map(function(o){return '<label class="ck"><input type="checkbox" data-c="'+b.cid+'" data-b="'+b.id+'" data-o="'+esc(o)+'"'+(o===pick?' checked':'')+'> '+o+'</label>'}).join("");
 }
 function renderPanel(total){
   var p=document.getElementById("panel");
@@ -216,7 +216,8 @@ document.getElementById("q").oninput=function(e){query=e.target.value.trim();ren
 document.getElementById("stats").onclick=function(e){var s=e.target.closest(".stat");if(!s)return;if(s.dataset.p){panelOpen=!panelOpen;render();return}if(s.dataset.f==null)return;panelOpen=false;filter=+s.dataset.f;render()};
 document.getElementById("panel").onchange=function(e){
   var t=e.target;if(!t.dataset.o)return;var c=find(t.dataset.c);
-  c.banks.forEach(function(b){if(b.id==t.dataset.b){b.tk=b.tk||{};b.tk[t.dataset.o]=t.checked}});save()};
+  if(t.checked)t.closest("td").querySelectorAll("input").forEach(function(i){if(i!==t)i.checked=false});
+  c.banks.forEach(function(b){if(b.id==t.dataset.b){b.tk={};if(t.checked)b.tk[t.dataset.o]=true}});save()};
 document.getElementById("list").onclick=function(e){
   var t=e.target.closest("button");if(!t)return;var c=find(t.dataset.c),a=t.dataset.a;
   if(a=="addbank")c.banks.push(newBank());
