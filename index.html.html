@@ -303,7 +303,8 @@ document.getElementById("panel").onchange=function(e){
 document.getElementById("list").onclick=function(e){
   var t=e.target.closest("button");if(!t)return;var c=find(t.dataset.c),a=t.dataset.a;
   if(a=="cal"){var pk=t.parentNode.querySelector(".pk");try{pk.showPicker()}catch(x){pk.focus()}return}
-  if(a=="tick"){c.banks.forEach(function(b){if(b.id==t.dataset.b)b[t.dataset.f]=b[t.dataset.f]?"":today()})}
+  if(a=="tick"){var hb;c.banks.forEach(function(b){if(b.id==t.dataset.b){b[t.dataset.f]=b[t.dataset.f]?"":today();hb=b}});
+    if(hb){var tr=t.closest("tr"),dt=tr.querySelector('.dt[data-k="'+t.dataset.f+'"]'),pk=dt&&dt.parentNode.querySelector(".pk");if(dt)dt.value=fmt(hb[t.dataset.f]);if(pk)pk.value=hb[t.dataset.f];save();liveUpdate(t,hb);return}}
   else if(a=="addbank")c.banks.push(newBank());
   else if(a=="delcust"){if(!confirm("ลบลูกค้า "+c.name+" และรายการทั้งหมด?"))return;data=data.filter(function(x){return x!=c})}
   else if(a=="delbank"){if(!confirm("ลบรายการนี้?"))return;c.banks=c.banks.filter(function(b){return b.id!=t.dataset.b})}
@@ -346,7 +347,7 @@ function fitOne(t){
   t.style.height=t.scrollHeight+"px";
 }
 function fit(){document.querySelectorAll("td.bk textarea").forEach(fitOne)}
-var _render=render;render=function(){_render();fit()};
+var _render=render;render=function(){var y=window.scrollY,sl=[].map.call(document.querySelectorAll("#list .scroll"),function(e){return e.scrollLeft});_render();[].forEach.call(document.querySelectorAll("#list .scroll"),function(e,i){if(sl[i])e.scrollLeft=sl[i]});fit();if(window.scrollY!==y)window.scrollTo(0,y)};
 window.addEventListener("resize",fit);
 document.getElementById("list").addEventListener("input",function(e){if(e.target.tagName=="TEXTAREA")fitOne(e.target)});
 var MONTHS=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
