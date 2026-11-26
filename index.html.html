@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-:root{--bg:#f3f0e8;--card:#fffdf8;--tx:#1c2321;--mu:#68716d;--bd:#dcd6c8;--ac:#0f6b5c;--acb:#d8ece6;--on:#fff;--ok:#1a7f4b;--okb:#dff2e6;--wt:#946000;--wtb:#fbefcf;--rd:#b42318;--gy:#59636e;--gyb:#e9e6de;--bl:#1f5fbf;--blb:#e1ecfa;--pu:#6b4bb8;--pub:#ece6fa;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root{--bg:#ffffff;--card:#ffffff;--sh:0 1px 2px rgba(20,30,28,.06),0 8px 22px rgba(20,30,28,.09);--shh:0 2px 4px rgba(20,30,28,.08),0 14px 30px rgba(20,30,28,.15);--tx:#1c2321;--mu:#68716d;--bd:#e7eae8;--ac:#0f6b5c;--acb:#d8ece6;--on:#fff;--ok:#1a7f4b;--okb:#dff2e6;--wt:#946000;--wtb:#fbefcf;--rd:#b42318;--gy:#59636e;--gyb:#e9e6de;--bl:#1f5fbf;--blb:#e1ecfa;--pu:#6b4bb8;--pub:#ece6fa;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12161a;--card:#1b2127;--tx:#e8ece9;--mu:#97a29d;--bd:#2d3640;--ac:#5cc5ae;--acb:#173a33;--on:#08201b;--ok:#5fd394;--okb:#16352a;--wt:#f0c050;--wtb:#3a3014;--rd:#ff8f84;--gy:#aab3bd;--gyb:#262d35;--bl:#8db8f8;--blb:#1b2c47;--pu:#b9a2f5;--pub:#2b2347;color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#12161a;--card:#1b2127;--tx:#e8ece9;--mu:#97a29d;--bd:#2d3640;--ac:#5cc5ae;--acb:#173a33;--on:#08201b;--ok:#5fd394;--okb:#16352a;--wt:#f0c050;--wtb:#3a3014;--rd:#ff8f84;--gy:#aab3bd;--gyb:#262d35;--bl:#8db8f8;--blb:#1b2c47;--pu:#b9a2f5;--pub:#2b2347;color-scheme:dark}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
@@ -85,6 +85,10 @@ th.no,td.no{width:56px;text-align:center;color:var(--mu)}
 .s0{background:var(--gyb);color:var(--gy)}.s1{background:var(--wtb);color:var(--wt)}.s2{background:var(--blb);color:var(--bl)}.s3{background:var(--pub);color:var(--pu)}.s4{background:var(--okb);color:var(--ok)}
 .late{color:var(--rd);font-size:12px;display:block;margin-top:2px}
 .empty{text-align:center;color:var(--mu);padding:44px 10px}
+.cust,.upb,.stat,.mp{box-shadow:var(--sh)}
+.upb:hover,.stat:hover{box-shadow:var(--shh)}
+.stat.on{box-shadow:0 0 0 1px var(--ac),var(--sh)}
+th{background:color-mix(in srgb,var(--gyb) 45%,var(--card))}
 .panel .cust{padding:0}
 .panel .cust .scroll{max-height:none}
 @media (max-width:640px){.wrap{padding:18px 14px 60px}h1{font-size:21px}.bar #exp{margin-left:0}}
@@ -94,7 +98,7 @@ th.no,td.no{width:56px;text-align:center;color:var(--mu)}
 <body>
 <div class="wrap">
   <header class="top">
-    <div><small>ทีม C-2 · ยืนยันยอดภายนอก</small><h1>ระบบติดตามยืนยันยอดภายนอก</h1></div>
+    <div><small>ทีม C-2 · ยืนยันยอดภายนอก</small><h1>ติดตามการยืนยันยอดบัญชีเงินฝากธนาคาร</h1></div>
     <div class="mp"><button type="button" id="pm" aria-label="เดือนก่อนหน้า">‹</button><b id="pl"></b><button type="button" id="pn" aria-label="เดือนถัดไป">›</button></div>
   </header>
   <div class="up">
@@ -102,6 +106,7 @@ th.no,td.no{width:56px;text-align:center;color:var(--mu)}
     <div class="upb"><b>ไฟล์สหกรณ์</b><input type="file" accept=".csv,.xlsx,.xls" data-type="สหกรณ์"></div>
     <div class="upb"><b>เงินลงทุนในหลักทรัพย์/ธนาคาร</b><input type="file" accept=".csv,.xlsx,.xls" data-type="เงินลงทุน"></div>
   </div>
+  <div class="msg" id="msg">นำเข้าไฟล์ที่มีคอลัมน์ “ชื่อสหกรณ์/ลูกค้า” และ “ชื่อธนาคาร/หน่วยงาน” (ถ้ามี “เลขที่บัญชี” จะต่อท้ายให้) · ไม่มีหัวตารางจะใช้คอลัมน์ 1 = ลูกค้า, 2 = หน่วยงาน</div>
   <div class="stats" id="stats"></div>
   <div id="panel"></div>
   <div class="bar">
@@ -279,8 +284,11 @@ document.getElementById("list").onclick=function(e){
   else if(a=="delcust"){if(!confirm("ลบลูกค้า "+c.name+" และรายการทั้งหมด?"))return;data=data.filter(function(x){return x!=c})}
   else if(a=="delbank"){if(!confirm("ลบรายการนี้?"))return;c.banks=c.banks.filter(function(b){return b.id!=t.dataset.b})}
   save();render()};
+document.getElementById("list").addEventListener("focusout",function(e){var t=e.target;if(t.type=="date"&&t.value&&parseInt(t.value,10)<1900)render()});
 document.getElementById("list").onchange=function(e){
-  var t=e.target;if(!t.dataset.k)return;var c=find(t.dataset.c);
+  var t=e.target;if(!t.dataset.k)return;
+  if(t.type=="date"&&t.value&&parseInt(t.value,10)<1900)return;
+  var c=find(t.dataset.c);
   c.banks.forEach(function(b){if(b.id==t.dataset.b)b[t.dataset.k]=t.value});
   save();render()};
 function fitOne(t){
@@ -310,63 +318,6 @@ KEY=keyFor(per);
 load();
 data.forEach(function(c){c.banks.forEach(function(b){if(b.type=="ธนาคาร")b.bank=b.bank.replace(/\s*\((?!มหาชน)[^)]*\)\s*$/,"")})});
 save();render();
-</script>
-<script>
-(function(){
-  var SHEET_URL="https://script.google.com/macros/s/AKfycbzlRtGIIz2Cf4iRASbCZ4zcKeCmpqg_qVPDDBpNhVU-RAWeQQ84XlWcl-VRRwtJLrpdng/exec",pushT=null,busy=false;
-  function url(){return /^https:\/\//.test(SHEET_URL)?SHEET_URL:""}
-  function tsKey(){return KEY+"-ts"}
-  function getTs(){try{return +localStorage.getItem(tsKey())||0}catch(e){return 0}}
-  function setTs(t){try{localStorage.setItem(tsKey(),t)}catch(e){}}
-
-  var box=document.createElement("span");
-  box.style.cssText="font-size:12px;color:var(--mu)";
-  document.querySelector(".top").appendChild(box);
-  function st(t){box.textContent=t}
-  st(url()?"Google Sheet: เชื่อมแล้ว":"ยังไม่ได้ใส่ URL Google Sheet ในโค้ด");
-
-  function rowsOut(){
-    var rows=[["ลูกค้า","ประเภท","รายการที่ขอยืนยัน","ธนาคาร/หน่วยงาน","ส่งให้ลูกค้า","ลูกค้าส่งกลับ","ส่งออกภายนอก","ภายนอกส่งกลับ","สถานะ"]];
-    data.forEach(function(c){c.banks.forEach(function(b){rows.push([c.name,b.type||"",picked(b),b.bank,b.sentCust,b.backCust,b.sentExt,b.backExt,LABEL[status(b)]])})});
-    return rows;
-  }
-
-  function push(){
-    var u=url();if(!u)return;
-    clearTimeout(pushT);
-    pushT=setTimeout(function(){
-      var ts=Date.now();setTs(ts);st("กำลังบันทึกขึ้น Google Sheet…");
-      fetch(u,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
-        body:JSON.stringify({key:KEY,ts:ts,label:MONTHS[per.m]+" "+(per.y+543),data:data,rows:rowsOut()})})
-      .then(function(r){return r.json()})
-      .then(function(){st("บันทึกขึ้น Google Sheet แล้ว "+new Date().toLocaleTimeString("th-TH"))})
-      .catch(function(){st("ซิงค์ไม่สำเร็จ (จะลองใหม่เมื่อแก้ไขครั้งถัดไป)")});
-    },800);
-  }
-
-  function pull(force){
-    var u=url();if(!u||busy)return;
-    var a=document.activeElement;
-    if(!force&&a&&/INPUT|TEXTAREA/.test(a.tagName))return;
-    busy=true;
-    fetch(u+(u.indexOf("?")>-1?"&":"?")+"key="+encodeURIComponent(KEY))
-    .then(function(r){return r.json()})
-    .then(function(j){
-      if(j&&j.data){
-        if(j.ts>getTs()){data=j.data;setTs(j.ts);try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}render();st("ดึงข้อมูลล่าสุดจาก Google Sheet แล้ว")}
-        else st("ข้อมูลเป็นปัจจุบัน "+new Date().toLocaleTimeString("th-TH"));
-      }else if(data.length)push();
-    })
-    .catch(function(){st("เชื่อม Google Sheet ไม่ได้ ตรวจ URL / สิทธิ์การเข้าถึง")})
-    .then(function(){busy=false});
-  }
-
-  var _save=save;save=function(){_save();push()};
-  var _mv=movePer;movePer=function(d){_mv(d);pull(true)};
-  pull(true);
-  setInterval(function(){pull(false)},30000);
-  document.addEventListener("visibilitychange",function(){if(!document.hidden)pull(false)});
-})();
 </script>
 </body>
 </html>
