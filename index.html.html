@@ -54,7 +54,7 @@ input[type=text],input[type=date]{background:var(--card);border:1px solid var(--
 input[type=date]{width:100%;padding:6px 8px;font-size:14px}
 .dc{display:flex;align-items:center;gap:6px}
 .dc input[type=date]{flex:1;min-width:0}
-.pw{position:relative;flex:1;min-width:0;display:flex;align-items:center}
+.pw{position:relative;flex:1;min-width:150px;display:flex;align-items:center}
 .pw .dt{width:100%;padding:6px 34px 6px 9px;font-size:14px;font-variant-numeric:tabular-nums}
 .cal{position:absolute;right:3px;background:transparent;color:var(--mu);padding:4px;border-radius:6px;display:grid;place-items:center}
 .cal:hover{color:var(--ac);filter:none;background:var(--acb)}
@@ -76,7 +76,7 @@ button.x{background:transparent;color:var(--rd);padding:4px 8px}
 .ch h2{margin:0;font-size:17px;font-weight:600;flex:1}
 .ch small{color:var(--mu);background:var(--gyb);border-radius:999px;padding:2px 10px;font-size:12px}
 .scroll{overflow-x:auto}
-table{border-collapse:collapse;width:100%;min-width:900px}
+table{border-collapse:collapse;width:100%;min-width:1080px}
 th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--bd);vertical-align:middle}
 tr:last-child td{border-bottom:0}
 tbody tr:hover td,tr:hover>td{background:color-mix(in srgb,var(--acb) 35%,transparent)}
@@ -189,7 +189,7 @@ function render(){
       rows.forEach(function(b,n){
         var s=status(b),k='data-c="'+c.id+'" data-b="'+b.id+'"';
         out+='<tr><td class="no">'+(n+1)+'</td><td class="bk"><textarea rows="1" placeholder="ชื่อธนาคาร" data-k="bank" '+k+'>'+esc(b.bank)+'</textarea>'+(b.type?'<span class="type">ประเภท: '+esc(b.type)+(picked(b)?' · '+esc(picked(b)):'')+'</span>':'')+'</td>';
-        ["sentCust","backCust","sentExt","backExt"].forEach(function(f){out+='<td><div class="dc"><span class="pw"><input type="text" class="dt" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="วว/ดด/ปปปป" value="'+fmt(b[f])+'" data-k="'+f+'" '+k+'><input type="date" class="pk" tabindex="-1" aria-hidden="true" value="'+esc(b[f])+'"><button type="button" class="cal" data-a="cal" '+k+' title="เลือกจากปฏิทิน">'+CAL+'</button></span>'+tickBtn(b,f,k)+'</div></td>'});
+        ["sentCust","backCust","sentExt","backExt"].forEach(function(f){out+='<td><div class="dc"><span class="pw"><input type="text" class="dt" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="dd/mm/yyyy" value="'+fmt(b[f])+'" data-k="'+f+'" '+k+'><input type="date" class="pk" tabindex="-1" aria-hidden="true" value="'+esc(b[f])+'"><button type="button" class="cal" data-a="cal" '+k+' title="เลือกจากปฏิทิน">'+CAL+'</button></span>'+tickBtn(b,f,k)+'</div></td>'});
         out+='<td><span class="badge s'+s+'">'+LABEL[s]+'</span><span class="late">'+late(b)+'</span></td><td><button class="x" data-a="delbank" '+k+'>ลบ</button></td></tr>';
       });
       out+='</table></div>';
