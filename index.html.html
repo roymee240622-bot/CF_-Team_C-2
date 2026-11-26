@@ -54,6 +54,11 @@ input[type=text],input[type=date]{background:var(--card);border:1px solid var(--
 input[type=date]{width:100%;padding:6px 8px;font-size:14px}
 .dc{display:flex;align-items:center;gap:6px}
 .dc input[type=date]{flex:1;min-width:0}
+.pw{position:relative;flex:1;min-width:0;display:flex;align-items:center}
+.pw .dt{width:100%;padding:6px 34px 6px 9px;font-size:14px;font-variant-numeric:tabular-nums}
+.cal{position:absolute;right:3px;background:transparent;color:var(--mu);padding:4px;border-radius:6px;display:grid;place-items:center}
+.cal:hover{color:var(--ac);filter:none;background:var(--acb)}
+.pk{position:absolute;right:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none}
 :focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 button.tick{background:transparent;border:0;padding:0;width:30px;height:30px;flex:none;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:var(--mu)}
 button.tick svg{width:28px;height:28px;display:block}
@@ -131,6 +136,11 @@ function tickBtn(b,f,k){return '<button type="button" class="tick'+(b[f]?' on':'
 function today(){var d=new Date(),m=d.getMonth()+1,y=d.getDate();return d.getFullYear()+"-"+(m<10?"0":"")+m+"-"+(y<10?"0":"")+y}
 var ORDER={"ธนาคาร":0,"สหกรณ์":1,"เงินลงทุน":2};
 function sorted(banks){return banks.map(function(b,i){return{b:b,i:i}}).sort(function(x,y){var a=ORDER[x.b.type],c=ORDER[y.b.type];a=a==null?9:a;c=c==null?9:c;return a-c||x.i-y.i}).map(function(o){return o.b})}
+var CAL='<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 2.5v3M17 2.5v3M3.5 9.5h17M5 4.5h14A1.5 1.5 0 0120.5 6v13a1.5 1.5 0 01-1.5 1.5H5A1.5 1.5 0 013.5 19V6A1.5 1.5 0 015 4.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+function fmt(v){var m=/^(\d{4})-(\d\d)-(\d\d)$/.exec(v||"");return m?m[3]+"/"+m[2]+"/"+m[1]:""}
+function parseD(s){var m=/^(\d\d)\/(\d\d)\/(\d{4})$/.exec(s);if(!m)return null;var d=+m[1],mo=+m[2],y=+m[3],dt=new Date(y,mo-1,d);if(y<1900||dt.getMonth()!=mo-1||dt.getDate()!=d)return null;return m[3]+"-"+m[2]+"-"+m[1]}
+function mask(s){var d=s.replace(/\D/g,"").slice(0,8),o=d.slice(0,2);if(d.length>2)o+="/"+d.slice(2,4);if(d.length>4)o+="/"+d.slice(4);return o}
+function commitD(t){var v=t.value,iso=v?parseD(v):"";if(v&&iso==null)return;var c=find(t.dataset.c),hb;c.banks.forEach(function(b){if(b.id==t.dataset.b){b[t.dataset.k]=iso;hb=b}});save();if(hb)liveUpdate(t,hb)}
 function days(d){if(!d)return 0;return Math.floor((Date.now()-new Date(d).getTime())/864e5)}
 function late(b){var s=status(b),d=s==1?days(b.sentCust):s==3?days(b.sentExt):0;return d>=14?"ค้างมาแล้ว "+d+" วัน":""}
 function newBank(name,type){return{id:uid(),bank:name||"",type:type||"",sentCust:"",backCust:"",sentExt:"",backExt:""}}
@@ -179,7 +189,7 @@ function render(){
       rows.forEach(function(b,n){
         var s=status(b),k='data-c="'+c.id+'" data-b="'+b.id+'"';
         out+='<tr><td class="no">'+(n+1)+'</td><td class="bk"><textarea rows="1" placeholder="ชื่อธนาคาร" data-k="bank" '+k+'>'+esc(b.bank)+'</textarea>'+(b.type?'<span class="type">ประเภท: '+esc(b.type)+(picked(b)?' · '+esc(picked(b)):'')+'</span>':'')+'</td>';
-        ["sentCust","backCust","sentExt","backExt"].forEach(function(f){out+='<td><div class="dc"><input type="date" value="'+esc(b[f])+'" data-k="'+f+'" '+k+'>'+tickBtn(b,f,k)+'</div></td>'});
+        ["sentCust","backCust","sentExt","backExt"].forEach(function(f){out+='<td><div class="dc"><span class="pw"><input type="text" class="dt" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="วว/ดด/ปปปป" value="'+fmt(b[f])+'" data-k="'+f+'" '+k+'><input type="date" class="pk" tabindex="-1" aria-hidden="true" value="'+esc(b[f])+'"><button type="button" class="cal" data-a="cal" '+k+' title="เลือกจากปฏิทิน">'+CAL+'</button></span>'+tickBtn(b,f,k)+'</div></td>'});
         out+='<td><span class="badge s'+s+'">'+LABEL[s]+'</span><span class="late">'+late(b)+'</span></td><td><button class="x" data-a="delbank" '+k+'>ลบ</button></td></tr>';
       });
       out+='</table></div>';
@@ -252,7 +262,7 @@ wb.SheetNames.forEach(function(sn){
 document.querySelectorAll('.up input[type=file]').forEach(function(i){i.onchange=function(){importFile(i)}});
 document.getElementById("exp").onclick=function(){
   var rows=[["ลูกค้า","ประเภท","รายการที่ขอยืนยัน","ธนาคาร/หน่วยงาน","ส่งให้ลูกค้า","ลูกค้าส่งกลับ","ส่งออกภายนอก","ภายนอกส่งกลับ","สถานะ"]];
-data.forEach(function(c){c.banks.forEach(function(b){rows.push([c.name,b.type||"",picked(b),b.bank,b.sentCust,b.backCust,b.sentExt,b.backExt,LABEL[status(b)]])})});
+data.forEach(function(c){c.banks.forEach(function(b){rows.push([c.name,b.type||"",picked(b),b.bank,fmt(b.sentCust),fmt(b.backCust),fmt(b.sentExt),fmt(b.backExt),LABEL[status(b)]])})});
   if(rows.length<2){say("ยังไม่มีข้อมูลให้ส่งออก");return}
   try{
     var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),"ติดตามยืนยันยอด");
@@ -279,14 +289,19 @@ document.getElementById("panel").onchange=function(e){
   save()};
 document.getElementById("list").onclick=function(e){
   var t=e.target.closest("button");if(!t)return;var c=find(t.dataset.c),a=t.dataset.a;
+  if(a=="cal"){var pk=t.parentNode.querySelector(".pk");try{pk.showPicker()}catch(x){pk.focus()}return}
   if(a=="tick"){c.banks.forEach(function(b){if(b.id==t.dataset.b)b[t.dataset.f]=b[t.dataset.f]?"":today()})}
   else if(a=="addbank")c.banks.push(newBank());
   else if(a=="delcust"){if(!confirm("ลบลูกค้า "+c.name+" และรายการทั้งหมด?"))return;data=data.filter(function(x){return x!=c})}
   else if(a=="delbank"){if(!confirm("ลบรายการนี้?"))return;c.banks=c.banks.filter(function(b){return b.id!=t.dataset.b})}
   save();render()};
-document.getElementById("list").addEventListener("focusout",function(e){var t=e.target;if(t.type=="date"&&t.value&&parseInt(t.value,10)<1900){var c=find(t.dataset.c),bb=c&&c.banks.filter(function(b){return b.id==t.dataset.b})[0];t.value=(bb&&bb[t.dataset.k])||""}});
+document.getElementById("list").addEventListener("focusout",function(e){var t=e.target;if(t.classList.contains("dt")){var c=find(t.dataset.c),bb=c&&c.banks.filter(function(b){return b.id==t.dataset.b})[0];if(bb)t.value=fmt(bb[t.dataset.k])}});
+document.getElementById("list").addEventListener("input",function(e){var t=e.target;if(!t.classList.contains("dt"))return;t.value=mask(t.value);if(t.value===""||t.value.length==10)commitD(t)});
 document.getElementById("list").onchange=function(e){
-  var t=e.target;if(!t.dataset.k)return;
+  var t=e.target;
+  if(t.classList.contains("pk")){var tx=t.parentNode.querySelector(".dt");tx.value=fmt(t.value);commitD(tx);return}
+  if(t.classList.contains("dt"))return;
+  if(!t.dataset.k)return;
   if(t.type=="date"&&t.value&&parseInt(t.value,10)<1900)return;
   var c=find(t.dataset.c);
   var hb;c.banks.forEach(function(b){if(b.id==t.dataset.b){b[t.dataset.k]=t.value;hb=b}});
