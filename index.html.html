@@ -227,7 +227,7 @@ data.forEach(function(c){c.banks.forEach(function(b){rows.push([c.name,b.type||"
   if(rows.length<2){say("ยังไม่มีข้อมูลให้ส่งออก");return}
   try{
     var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),"ติดตามยืนยันยอด");
-    XLSX.writeFile(wb,"bank-confirm-tracker.xlsx");
+    XLSX.writeFile(wb,"bank-confirm-"+per.y+"-"+(per.m+1)+".xlsx");
   }catch(e){say("ส่งออกไม่สำเร็จ ลองใช้งานผ่านเบราว์เซอร์หรือดาวน์โหลดไฟล์ HTML ไปเปิดในเครื่อง")}
 };
 document.getElementById("addCust").onclick=function(){
@@ -277,10 +277,12 @@ var MONTHS=["มกราคม","กุมภาพันธ์","มีนา�
 var PKEY="bankconfirm-period",per={m:11,y:2026};
 try{var pr=JSON.parse(localStorage.getItem(PKEY));if(pr&&pr.m>=0&&pr.m<=11&&pr.y)per=pr}catch(e){}
 function showPer(){document.getElementById("pl").textContent=MONTHS[per.m]+" "+(per.y+543)}
-function movePer(d){per.m+=d;if(per.m<0){per.m=11;per.y--}else if(per.m>11){per.m=0;per.y++}try{localStorage.setItem(PKEY,JSON.stringify(per))}catch(e){}showPer()}
+function keyFor(p){return(p.y==2026&&p.m==11)?"bankconfirm-v1":"bankconfirm-v1-"+p.y+"-"+p.m}
+function movePer(d){per.m+=d;if(per.m<0){per.m=11;per.y--}else if(per.m>11){per.m=0;per.y++}try{localStorage.setItem(PKEY,JSON.stringify(per))}catch(e){}showPer();KEY=keyFor(per);data=[];filter=-1;query="";document.getElementById("q").value="";panelOpen=false;load();render()}
 document.getElementById("pm").onclick=function(){movePer(-1)};
 document.getElementById("pn").onclick=function(){movePer(1)};
 showPer();
+KEY=keyFor(per);
 load();
 data.forEach(function(c){c.banks.forEach(function(b){if(b.type=="ธนาคาร")b.bank=b.bank.replace(/\s*\((?!มหาชน)[^)]*\)\s*$/,"")})});
 save();render();
