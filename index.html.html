@@ -53,8 +53,7 @@ input,button,select,textarea{font:inherit;color:var(--tx)}
 input[type=text],input[type=date]{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px 11px;min-width:0}
 input[type=date]{width:100%;padding:6px 8px;font-size:14px}
 .dc{display:flex;align-items:center;gap:6px}
-.dc input.dt{flex:1;min-width:0;width:100%;font-size:14px;padding:6px 8px}
-.dt.bad{border-color:var(--rd)}
+.dc input[type=date]{flex:1;min-width:0}
 :focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 button.tick{background:transparent;border:0;padding:0;width:30px;height:30px;flex:none;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:var(--mu)}
 button.tick svg{width:28px;height:28px;display:block}
@@ -125,12 +124,6 @@ function picked(b){var tk=b.tk||{};return Object.keys(tk).filter(function(k){ret
 var TICK='<svg viewBox="0 0 32 32" aria-hidden="true"><circle class="ring" cx="16" cy="16" r="13" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M9.5 16.5l4.5 4.5 8.5-9.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function tickBtn(b,f,k){return '<button type="button" class="tick'+(b[f]?' on':'')+'" data-a="tick" data-f="'+f+'" '+k+' title="'+(b[f]?'ล้างวันที่':'ใส่วันที่วันนี้')+'">'+TICK+'</button>'}
 function today(){var d=new Date(),m=d.getMonth()+1,y=d.getDate();return d.getFullYear()+"-"+(m<10?"0":"")+m+"-"+(y<10?"0":"")+y}
-function dmy(v){var m=/^(\d{4})-(\d\d)-(\d\d)$/.exec(v||"");return m?m[3]+"/"+m[2]+"/"+m[1]:""}
-function iso(s){var m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec((s||"").trim());if(!m)return null;
-  var d=+m[1],mo=+m[2],y=+m[3];if(y>2400)y-=543;
-  var t=new Date(y,mo-1,d);
-  if(t.getFullYear()!=y||t.getMonth()!=mo-1||t.getDate()!=d||y<2000)return null;
-  return y+"-"+(mo<10?"0":"")+mo+"-"+(d<10?"0":"")+d}
 var ORDER={"ธนาคาร":0,"สหกรณ์":1,"เงินลงทุน":2};
 function sorted(banks){return banks.map(function(b,i){return{b:b,i:i}}).sort(function(x,y){var a=ORDER[x.b.type],c=ORDER[y.b.type];a=a==null?9:a;c=c==null?9:c;return a-c||x.i-y.i}).map(function(o){return o.b})}
 function days(d){if(!d)return 0;return Math.floor((Date.now()-new Date(d).getTime())/864e5)}
@@ -181,7 +174,7 @@ function render(){
       rows.forEach(function(b,n){
         var s=status(b),k='data-c="'+c.id+'" data-b="'+b.id+'"';
         out+='<tr><td class="no">'+(n+1)+'</td><td class="bk"><textarea rows="1" placeholder="ชื่อธนาคาร" data-k="bank" '+k+'>'+esc(b.bank)+'</textarea>'+(b.type?'<span class="type">ประเภท: '+esc(b.type)+(picked(b)?' · '+esc(picked(b)):'')+'</span>':'')+'</td>';
-        ["sentCust","backCust","sentExt","backExt"].forEach(function(f){out+='<td><div class="dc">'<input type="text" class="dt" inputmode="numeric" maxlength="10" placeholder="วว/ดด/ปปปป" value="'+esc(dmy(b[f]))+'" data-k="'+f+'" '+k+'>'+tickBtn(b,f,k)+'</div></td>'});
+        ["sentCust","backCust","sentExt","backExt"].forEach(function(f){out+='<td><div class="dc"><input type="date" value="'+esc(b[f])+'" data-k="'+f+'" '+k+'>'+tickBtn(b,f,k)+'</div></td>'});
         out+='<td><span class="badge s'+s+'">'+LABEL[s]+'</span><span class="late">'+late(b)+'</span></td><td><button class="x" data-a="delbank" '+k+'>ลบ</button></td></tr>';
       });
       out+='</table></div>';
@@ -286,22 +279,20 @@ document.getElementById("list").onclick=function(e){
   else if(a=="delcust"){if(!confirm("ลบลูกค้า "+c.name+" และรายการทั้งหมด?"))return;data=data.filter(function(x){return x!=c})}
   else if(a=="delbank"){if(!confirm("ลบรายการนี้?"))return;c.banks=c.banks.filter(function(b){return b.id!=t.dataset.b})}
   save();render()};
-document.getElementById("list").addEventListener("input",function(e){
-  var t=e.target;if(!t.classList.contains("dt"))return;
-  var d=t.value.replace(/\D/g,"").slice(0,8),o=d;
-  if(d.length>4)o=d.slice(0,2)+"/"+d.slice(2,4)+"/"+d.slice(4);
-  else if(d.length>2)o=d.slice(0,2)+"/"+d.slice(2);
-  t.value=o;t.classList.remove("bad")});
 document.getElementById("list").onchange=function(e){
-  var t=e.target;if(!t.dataset.k)return;var c=find(t.dataset.c),v=t.value;
-  if(t.classList.contains("dt")){
-    if(v.trim()==="")v="";
-    else{var i=iso(v);
-      if(i===null){t.classList.add("bad");say("วันที่ไม่ถูกต้อง กรอกเป็น วว/ดด/ปปปป เช่น 16/10/2026");return}
-      v=i}
-  }
-  c.banks.forEach(function(b){if(b.id==t.dataset.b)b[t.dataset.k]=v});
+  var t=e.target;if(!t.dataset.k)return;var c=find(t.dataset.c);
+  c.banks.forEach(function(b){if(b.id==t.dataset.b)b[t.dataset.k]=t.value});
   save();render()};
+function fitOne(t){
+  var size=15,min=9;
+  t.style.fontSize=size+"px";
+  t.style.height="auto";
+  var cs=getComputedStyle(t),pad=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom);
+  while(size>min&&(t.scrollHeight-pad)>size*1.3*2+1){
+    size-=0.5;t.style.fontSize=size+"px";t.style.height="auto";
+  }
+  t.style.height=t.scrollHeight+"px";
+}
 function fit(){document.querySelectorAll("td.bk textarea").forEach(fitOne)}
 var _render=render;render=function(){_render();fit()};
 window.addEventListener("resize",fit);
@@ -336,7 +327,7 @@ save();render();
 
   function rowsOut(){
     var rows=[["ลูกค้า","ประเภท","รายการที่ขอยืนยัน","ธนาคาร/หน่วยงาน","ส่งให้ลูกค้า","ลูกค้าส่งกลับ","ส่งออกภายนอก","ภายนอกส่งกลับ","สถานะ"]];
-    data.forEach(function(c){c.banks.forEach(function(b){rows.push([c.name,b.type||"",picked(b),b.bank,dmy(b.sentCust),dmy(b.backCust),dmy(b.sentExt),dmy(b.backExt),LABEL[status(b)]])})});
+    data.forEach(function(c){c.banks.forEach(function(b){rows.push([c.name,b.type||"",picked(b),b.bank,b.sentCust,b.backCust,b.sentExt,b.backExt,LABEL[status(b)]])})});
     return rows;
   }
 
