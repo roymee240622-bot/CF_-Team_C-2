@@ -29,6 +29,7 @@ h1{font-size:22px;margin:0 0 4px}
 .stat.info{cursor:default;border-style:dashed}
 .panel{background:var(--card);border:1px solid var(--bd);border-radius:12px;margin-bottom:16px;max-height:60vh;overflow-y:auto}
 .panel h3{margin:0;padding:12px 14px;font-size:16px;border-bottom:1px solid var(--bd)}
+.ph{margin:0 0 12px;font-size:16px}
 .ck{display:inline-flex;align-items:center;gap:4px;margin-right:14px;white-space:nowrap;font-size:14px}
 .ck input{width:auto}
 .bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
@@ -97,9 +98,9 @@ function setHtml(b){
 function renderPanel(total){
   var p=document.getElementById("panel");
   if(!panelOpen){p.innerHTML="";return}
-  var h='<div class="panel"><h3>ข้อมูลยืนยันยอดภายนอก '+total+' รายการ · สหกรณ์ '+data.length+' แห่ง · ติ๊กรายการที่ขอยืนยัน</h3>';
+  var h='<div><h3 class="ph">ข้อมูลยืนยันยอดภายนอก '+total+' รายการ · สหกรณ์ '+data.length+' แห่ง · ติ๊กรายการที่ขอยืนยัน</h3>';
   data.forEach(function(c){
-    h+='<div class="cust" style="margin:12px;"><div class="ch"><h2>'+esc(c.name)+'</h2><small>'+c.banks.length+' รายการ</small></div>';
+    h+='<div class="cust"><div class="ch"><h2>'+esc(c.name)+'</h2><small>'+c.banks.length+' รายการ</small></div>';
     if(c.banks.length){
       h+='<div class="scroll"><table><tr><th class="no">ลำดับ</th><th>ชื่อหน่วยงาน</th><th>ประเภทไฟล์</th><th>รายการที่ขอยืนยัน</th></tr>';
       c.banks.forEach(function(b,n){b.cid=c.id;
