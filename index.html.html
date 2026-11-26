@@ -311,5 +311,62 @@ load();
 data.forEach(function(c){c.banks.forEach(function(b){if(b.type=="ธนาคาร")b.bank=b.bank.replace(/\s*\((?!มหาชน)[^)]*\)\s*$/,"")})});
 save();render();
 </script>
+<script>
+(function(){
+  var SHEET_URL="https://script.google.com/macros/s/xxxx/exec",pushT=null,busy=false;
+  function url(){return /^https:\/\//.test(SHEET_URL)?SHEET_URL:""}
+  function tsKey(){return KEY+"-ts"}
+  function getTs(){try{return +localStorage.getItem(tsKey())||0}catch(e){return 0}}
+  function setTs(t){try{localStorage.setItem(tsKey(),t)}catch(e){}}
+
+  var box=document.createElement("span");
+  box.style.cssText="font-size:12px;color:var(--mu)";
+  document.querySelector(".top").appendChild(box);
+  function st(t){box.textContent=t}
+  st(url()?"Google Sheet: เชื่อมแล้ว":"ยังไม่ได้ใส่ URL Google Sheet ในโค้ด");
+
+  function rowsOut(){
+    var rows=[["ลูกค้า","ประเภท","รายการที่ขอยืนยัน","ธนาคาร/หน่วยงาน","ส่งให้ลูกค้า","ลูกค้าส่งกลับ","ส่งออกภายนอก","ภายนอกส่งกลับ","สถานะ"]];
+    data.forEach(function(c){c.banks.forEach(function(b){rows.push([c.name,b.type||"",picked(b),b.bank,b.sentCust,b.backCust,b.sentExt,b.backExt,LABEL[status(b)]])})});
+    return rows;
+  }
+
+  function push(){
+    var u=url();if(!u)return;
+    clearTimeout(pushT);
+    pushT=setTimeout(function(){
+      var ts=Date.now();setTs(ts);st("กำลังบันทึกขึ้น Google Sheet…");
+      fetch(u,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
+        body:JSON.stringify({key:KEY,ts:ts,label:MONTHS[per.m]+" "+(per.y+543),data:data,rows:rowsOut()})})
+      .then(function(r){return r.json()})
+      .then(function(){st("บันทึกขึ้น Google Sheet แล้ว "+new Date().toLocaleTimeString("th-TH"))})
+      .catch(function(){st("ซิงค์ไม่สำเร็จ (จะลองใหม่เมื่อแก้ไขครั้งถัดไป)")});
+    },800);
+  }
+
+  function pull(force){
+    var u=url();if(!u||busy)return;
+    var a=document.activeElement;
+    if(!force&&a&&/INPUT|TEXTAREA/.test(a.tagName))return;
+    busy=true;
+    fetch(u+(u.indexOf("?")>-1?"&":"?")+"key="+encodeURIComponent(KEY))
+    .then(function(r){return r.json()})
+    .then(function(j){
+      if(j&&j.data){
+        if(j.ts>getTs()){data=j.data;setTs(j.ts);try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}render();st("ดึงข้อมูลล่าสุดจาก Google Sheet แล้ว")}
+        else st("ข้อมูลเป็นปัจจุบัน "+new Date().toLocaleTimeString("th-TH"));
+      }else if(data.length)push();
+    })
+    .catch(function(){st("เชื่อม Google Sheet ไม่ได้ ตรวจ URL / สิทธิ์การเข้าถึง")})
+    .then(function(){busy=false});
+  }
+
+  var _save=save;save=function(){_save();push()};
+  var _mv=movePer;movePer=function(d){_mv(d);pull(true)};
+  pull(true);
+  setInterval(function(){pull(false)},30000);
+  document.addEventListener("visibilitychange",function(){if(!document.hidden)pull(false)});
+})();
+</script>
 </body>
 </html>
