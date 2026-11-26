@@ -140,7 +140,7 @@ tr:hover>td.no,tr:hover>td:nth-child(2){background:color-mix(in srgb,var(--acb) 
 var KEY="bankconfirm-v1",data=[],filter=-1,query="";
 var LABEL=["ยังไม่ส่งลูกค้า","รอลูกค้าส่งกลับ","รอส่งออกภายนอก","รอภายนอกตอบกลับ","เสร็จสิ้น"];
 function load(){try{var r=localStorage.getItem(KEY);if(r)data=JSON.parse(r)||[]}catch(e){data=[]}}
-var API="https://script.google.com/macros/s/AKfycbz_lB6fjs9JdIWIrONcD6snWTf4Gqu1FVRZUQVXsDHuW1RoYBjuPfIJUJMdhi6OBxyVtA/exec",_t,ready=false;
+var API="https://script.google.com/macros/s/AKfycbw3v2XAecV5pNdoiOIskV29szVpnPHwCvDOwAUduwXqg4d6rfbaNsRneJKsTojSD1XVKw/exec",_t,ready=false;
 function hasAPI(){return /^https:\/\/script\.google\.com\/.+\/exec$/.test(API)}
 function save(){
   try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}
