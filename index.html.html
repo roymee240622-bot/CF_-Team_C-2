@@ -357,6 +357,18 @@ document.getElementById("list").addEventListener("focusout",function(e){var t=e.
 document.getElementById("list").addEventListener("input",function(e){var t=e.target;if(!t.classList.contains("dt"))return;var del=(e.inputType||"").indexOf("delete")==0;t.value=mask(t.value,del);if(t.value===""||t.value.length==10)commitD(t)});
 document.getElementById("list").addEventListener("keydown",function(e){var t=e.target;if(e.key!="Enter"||!t.classList.contains("dt"))return;e.preventDefault();var all=[].slice.call(document.querySelectorAll('#list .dt[data-k="'+t.dataset.k+'"]')),n=all[all.indexOf(t)+(e.shiftKey?-1:1)];if(n){n.focus();n.select()}});
 document.getElementById("list").addEventListener("focusin",function(e){if(e.target.classList.contains("dt"))e.target.select()});
+document.getElementById("list").addEventListener("keydown",function(e){
+  var t=e.target;
+  if(!t.classList||!t.classList.contains("nt"))return;
+  if(e.key!=="Enter"||e.isComposing||e.keyCode===229)return;  // ไม่ขัดจังหวะตอนพิมพ์ภาษาไทยที่ยังไม่ยืนยันตัวอักษร
+  if(e.shiftKey)return;                                        // Shift+Enter = ขึ้นบรรทัดใหม่ในหมายเหตุ
+  e.preventDefault();
+  t.blur();                                                    // Enter = จบการพิมพ์
+});
+document.getElementById("list").addEventListener("focusin",function(e){
+  var t=e.target;
+  if(t.classList&&t.classList.contains("nt"))growOne(t);       // ตอนคลิกเข้าไปให้กล่องขยายตามข้อความเดิมทันที
+});
 document.getElementById("list").onchange=function(e){
   var t=e.target;
   if(t.classList.contains("pk")){var tx=t.parentNode.querySelector(".dt");tx.value=fmt(t.value);commitD(tx);return}
