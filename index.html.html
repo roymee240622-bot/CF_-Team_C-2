@@ -148,7 +148,7 @@ function render(){
 function find(id){return data.filter(function(c){return c.id==id})[0]}
 function say(t){document.getElementById("msg").textContent=t}
 function cell(v){return String(v==null?"":v).replace(/\s+/g," ").trim()}
-function parseRows(rows){
+function parseRows(rows,type ){
   var hi=-1,ci=0,bi=1,ai=-1,i,j;
   for(i=0;i<Math.min(rows.length,12)&&hi<0;i++){
     var r=rows[i].map(cell),c=-1,b=-1,a=-1;
@@ -163,7 +163,7 @@ function parseRows(rows){
   for(i=hi+1;i<rows.length;i++){
     var r2=rows[i],cn=cell(r2[ci]),bn=cell(r2[bi]);
     if(!cn||!bn)continue;
-    if(ai>=0&&cell(r2[ai]))bn+=" ("+cell(r2[ai])+")";
+    if(type!="ธนาคาร"&&ai>=0&&cell(r2[ai]))bn+=" ("+cell(r2[ai])+")";
     out.push([cn,bn])
   }
   return {pairs:out,header:hi>=0};
@@ -182,7 +182,7 @@ function importFile(inp){
   fr.onload=function(e){
     try{
       var wb=readBook(e.target.result,f.name),ws=wb.Sheets[wb.SheetNames[0]];
-      var res=parseRows(XLSX.utils.sheet_to_json(ws,{header:1,defval:""}));
+      var res=parseRows(XLSX.utils.sheet_to_json(ws,{header:1,defval:""}),type);
       var added=0,skipped=0,newC=0;
       res.pairs.forEach(function(p){
         var c=data.filter(function(x){return x.name==p[0]})[0];
@@ -236,7 +236,9 @@ document.getElementById("list").onchange=function(e){
   var t=e.target;if(!t.dataset.k)return;var c=find(t.dataset.c);
   c.banks.forEach(function(b){if(b.id==t.dataset.b)b[t.dataset.k]=t.value});
   save();render()};
-load();render();
+load();
+data.forEach(function(c){c.banks.forEach(function(b){if(b.type=="ธนาคาร")b.bank=b.bank.replace(/\s*\((?!มหาชน)[^)]*\)\s*$/,"")})});
+save();render();
 </script>
 </body>
 </html>
