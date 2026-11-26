@@ -193,8 +193,14 @@ function importFile(inp){
   var fr=new FileReader();
   fr.onload=function(e){
     try{
-      var wb=readBook(e.target.result,f.name),ws=wb.Sheets[wb.SheetNames[0]];
-      var res=parseRows(XLSX.utils.sheet_to_json(ws,{header:1,defval:""}),type);
+      var wb=readBook(e.target.result,f.name);
+var res={pairs:[],header:true},sheetInfo=[];
+wb.SheetNames.forEach(function(sn){
+  var r=parseRows(XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:""}),type);
+  res.pairs=res.pairs.concat(r.pairs);
+  if(!r.header)res.header=false;
+  sheetInfo.push(sn+" "+r.pairs.length);
+});
       var added=0,skipped=0,newC=0;
       res.pairs.forEach(function(p){
         var c=data.filter(function(x){return x.name==p[0]})[0];
