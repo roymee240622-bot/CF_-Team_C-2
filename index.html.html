@@ -97,12 +97,19 @@ function setHtml(b){
 function renderPanel(total){
   var p=document.getElementById("panel");
   if(!panelOpen){p.innerHTML="";return}
-  var h='<div class="panel"><h3>ข้อมูลยืนยันยอดภายนอก '+total+' รายการ · ติ๊กรายการที่ขอยืนยัน</h3><div class="scroll"><table><tr><th class="no">ลำดับ</th><th>สหกรณ์</th><th>ชื่อหน่วยงาน</th><th>ประเภทไฟล์</th><th>รายการที่ขอยืนยัน</th></tr>';
-  var n=0;
-  data.forEach(function(c){c.banks.forEach(function(b){n++;b.cid=c.id;
-    h+='<tr><td class="no">'+n+'</td><td>'+esc(c.name)+'</td><td>'+esc(b.bank)+'</td><td>'+esc(b.type||"-")+'</td><td>'+setHtml(b)+'</td></tr>'})});
-  if(!n)h+='<tr><td colspan="5" class="empty">ยังไม่มีรายการ</td></tr>';
-  p.innerHTML=h+'</table></div></div>';
+  var h='<div class="panel"><h3>ข้อมูลยืนยันยอดภายนอก '+total+' รายการ · สหกรณ์ '+data.length+' แห่ง · ติ๊กรายการที่ขอยืนยัน</h3>';
+  data.forEach(function(c){
+    h+='<div class="cust" style="margin:12px;"><div class="ch"><h2>'+esc(c.name)+'</h2><small>'+c.banks.length+' รายการ</small></div>';
+    if(c.banks.length){
+      h+='<div class="scroll"><table><tr><th class="no">ลำดับ</th><th>ชื่อหน่วยงาน</th><th>ประเภทไฟล์</th><th>รายการที่ขอยืนยัน</th></tr>';
+      c.banks.forEach(function(b,n){b.cid=c.id;
+        h+='<tr><td class="no">'+(n+1)+'</td><td>'+esc(b.bank)+'</td><td>'+esc(b.type||"-")+'</td><td>'+setHtml(b)+'</td></tr>'});
+      h+='</table></div>';
+    }else h+='<div class="empty">ยังไม่มีรายการ</div>';
+    h+='</div>';
+  });
+  if(!data.length)h+='<div class="empty">ยังไม่มีรายการ</div>';
+  p.innerHTML=h+'</div>';
 }
 function render(){
   var cnt=[0,0,0,0,0],total=0;
