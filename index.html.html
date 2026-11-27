@@ -71,7 +71,8 @@ button.tick{background:transparent;border:0;padding:0;width:30px;height:30px;fle
 button.tick svg{width:28px;height:28px;display:block}
 button.tick:hover{color:var(--ac)}
 button.tick.on{color:var(--ok)}
-button.tick.on .ring{fill:var(--okb)}
+button.tick.on .ring{fill:var(--ok);stroke:var(--ok)}
+button.tick.on .chk{stroke:#fff}
 button{background:var(--ac);color:var(--on);border:0;border-radius:8px;padding:8px 15px;cursor:pointer;font-weight:500;transition:transform .12s,filter .12s}
 button:hover{filter:brightness(1.08)}
 button:active{transform:scale(.97)}
@@ -193,7 +194,7 @@ function uid(){return Math.random().toString(36).slice(2,9)}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function status(b){if(b.backExt)return 4;if(b.sentExt)return 3;if(b.backCust)return 2;if(b.sentCust)return 1;return 0}
 function picked(b){var tk=b.tk||{};return Object.keys(tk).filter(function(k){return tk[k]})[0]||""}
-var TICK='<svg viewBox="0 0 32 32" aria-hidden="true"><circle class="ring" cx="16" cy="16" r="13" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M9.5 16.5l4.5 4.5 8.5-9.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var TICK='<svg viewBox="0 0 32 32" aria-hidden="true"><circle class="ring" cx="16" cy="16" r="13" fill="none" stroke="currentColor" stroke-width="2.5"/><path class="chk" d="M9.5 16.5l4.5 4.5 8.5-9.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function tickBtn(b,f,k){return '<button type="button" class="tick'+(b[f]?' on':'')+'" data-a="tick" data-f="'+f+'" '+k+' title="'+(b[f]?'ล้างวันที่':'ใส่วันที่วันนี้')+'">'+TICK+'</button>'}
 function today(){var d=new Date(),m=d.getMonth()+1,y=d.getDate();return d.getFullYear()+"-"+(m<10?"0":"")+m+"-"+(y<10?"0":"")+y}
 var ORDER={"ธนาคาร":0,"สหกรณ์":1,"เงินลงทุน":2};
