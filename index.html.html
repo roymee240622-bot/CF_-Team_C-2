@@ -122,7 +122,7 @@ tr:hover>td.no,tr:hover>td:nth-child(2){background:color-mix(in srgb,var(--acb) 
 <body>
 <div class="wrap">
   <header class="top">
-        <div class="brand"><img class="logo" alt="NSK Team 6"><div><small>ทีม C-2 · ยืนยันยอดภายนอก</small><h1>ระบบติดตามยืนยันยอดภายนอก</h1></div></div>
+        <div class="brand"><img class="logo" src="data:image/webp;base64,LOGO_B64" alt="NSK Team 6"><div><small>ทีม C-2 · ยืนยันยอดภายนอก</small><h1>ระบบติดตามยืนยันยอดภายนอก</h1></div></div>
     <div class="mp"><button type="button" id="pm" aria-label="เดือนก่อนหน้า">‹</button><b id="pl"></b><button type="button" id="pn" aria-label="เดือนถัดไป">›</button></div>
   </header>
   <div class="up">
@@ -453,8 +453,6 @@ KEY=keyFor(per);
 load();
 data.forEach(function(c){c.banks.forEach(function(b){if(b.type=="ธนาคาร")b.bank=b.bank.replace(/\s*\((?!มหาชน)[^)]*\)\s*$/,"")})});
 save();render();pull();
-<script>
-(function(){var l=document.querySelector('link[rel="icon"]'),i=document.querySelector(".logo");if(l&&i)i.src=l.href;})();
 </script>
 </body>
 </html>
