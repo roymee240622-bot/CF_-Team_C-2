@@ -167,9 +167,9 @@ function push(k,d){
 var TOKKEY="bankconfirm-token";
 var _t,pend=null,synced={},pullSeq=0,pullAbort=null,_pt;
 function hasAPI(){return /^https:\/\/script\.google\.com\/.+\/exec$/.test(API)}
-function getTok(){try{return localStorage.getItem(TOKKEY)||""}catch(e){return ""}}
-function askTok(){var t=prompt("กรอกรหัสผ่านสำหรับซิงก์ข้อมูลขึ้น Google Sheet");t=(t||"").trim();if(t){try{localStorage.setItem(TOKKEY,t)}catch(e){}}return t}
-function badTok(k){try{localStorage.removeItem(TOKKEY)}catch(e){}synced[k]=false;say("รหัสผ่านไม่ถูกต้อง ยังไม่ซิงก์ขึ้นชีต รีเฟรชหน้าแล้วกรอกใหม่")}
+function getTok(){try{return sessionStorage.getItem(TOKKEY)||""}catch(e){return ""}}
+function askTok(){var t=prompt("กรอกรหัสผ่านสำหรับซิงก์ข้อมูลขึ้น Google Sheet");t=(t||"").trim();if(t){try{sessionStorage.setItem(TOKKEY,t)}catch(e){}}return t}
+function badTok(k){try{sessionStorage.removeItem(TOKKEY)}catch(e){}synced[k]=false;say("รหัสผ่านไม่ถูกต้อง ยังไม่ซิงก์ขึ้นชีต รีเฟรชหน้าแล้วกรอกใหม่")}
 function maskAcc(s){var d=String(s).replace(/\D/g,"");return d.length>4?"xxxx"+d.slice(-4):s}
 function scrub(arr){arr.forEach(function(c){c.banks.forEach(function(b){b.bank=(b.bank||"").replace(/\(([^)]*)\)\s*$/,function(m,x){return"("+maskAcc(x)+")"})})});return arr}
 function save(){
